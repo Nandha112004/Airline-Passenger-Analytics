@@ -1,0 +1,131 @@
+{% extends "public_base.html" %}
+{% block title %}About — Airline Analytics{% endblock %}
+
+{% block content %}
+<section class="section" style="padding-top:56px">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6">
+        <span class="eyebrow reveal"><i class="bi bi-info-circle"></i> About the project</span>
+        <h1 class="section-title mt-3 reveal" data-delay="1">Airline Passenger Trend Analysis &amp; Demand Forecasting</h1>
+        <p class="section-sub mt-3 reveal" data-delay="2">
+          A Django application that turns a monthly passenger dataset into business insight:
+          descriptive statistics, seasonal analysis, growth measurement and time-series demand
+          forecasting — presented through a modern aviation analytics dashboard.
+        </p>
+        <div class="d-flex flex-wrap gap-2 mt-4 reveal" data-delay="3">
+          <span class="chip chip--primary"><i class="bi bi-cpu"></i> Statistical analysis</span>
+          <span class="chip chip--accent"><i class="bi bi-graph-up"></i> Machine learning</span>
+          <span class="chip chip--success"><i class="bi bi-bar-chart"></i> Data visualization</span>
+        </div>
+        <div class="d-flex flex-wrap gap-3 mt-4 reveal" data-delay="4">
+          <a href="/dashboard/" class="btn btn-primary magnetic"><i class="bi bi-speedometer2 me-2"></i> Explore Dashboard</a>
+          <a href="/" class="btn btn-ghost magnetic"><i class="bi bi-house-door me-2"></i> Back to Home</a>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="glass-card p-4 reveal" data-delay="2">
+          <div class="row g-3 text-center">
+            <div class="col-6">
+              <div class="p-3 rounded-3" style="background:var(--bg-subtle);border:1px solid var(--border)">
+                <div class="stat-value grad-text" data-count="12" data-count-suffix="+">0</div>
+                <small class="text-muted">Modules</small>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-3 rounded-3" style="background:var(--bg-subtle);border:1px solid var(--border)">
+                <div class="stat-value grad-text" data-count="6">0</div>
+                <small class="text-muted">Chart types</small>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-3 rounded-3" style="background:var(--bg-subtle);border:1px solid var(--border)">
+                <div class="stat-value grad-text" data-count="3">0</div>
+                <small class="text-muted">Forecast models</small>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-3 rounded-3" style="background:var(--bg-subtle);border:1px solid var(--border)">
+                <div class="stat-value grad-text" data-count="144">0</div>
+                <small class="text-muted">Sample records</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section--tight">
+  <div class="container">
+    <div class="section-head section-head--center text-center mb-4 reveal">
+      <h2 class="section-title">How the system is organised</h2>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-3 reveal">
+        <div class="feature-card h-100">
+          <div class="feature-card__icon" style="background:var(--grad-primary)"><i class="bi bi-database"></i></div>
+          <h5>Data layer</h5>
+          <p>One <code>PassengerData</code> model keyed by month, backed by SQLite with migrations and an admin panel for direct inspection.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3 reveal" data-delay="1">
+        <div class="feature-card h-100">
+          <div class="feature-card__icon" style="background:var(--grad-cyan)"><i class="bi bi-calculator"></i></div>
+          <h5>Analytics</h5>
+          <p>Pandas groupby produces yearly, monthly, seasonal, growth and heatmap datasets that are serialized to JSON for the charts.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3 reveal" data-delay="2">
+        <div class="feature-card h-100">
+          <div class="feature-card__icon" style="background:var(--grad-sunset)"><i class="bi bi-magic"></i></div>
+          <h5>Forecasting</h5>
+          <p>Scikit-learn and Statsmodels fit linear, moving-average and seasonal models, scored on a held-out 20% test split.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3 reveal" data-delay="3">
+        <div class="feature-card h-100">
+          <div class="feature-card__icon" style="background:var(--grad-accent)"><i class="bi bi-window"></i></div>
+          <h5>Presentation</h5>
+          <p>Django templates render Chart.js visualizations on a glassmorphism design system with light and dark themes.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section--tight">
+  <div class="container">
+    <div class="glass-card p-4 p-lg-5 reveal">
+      <h2 class="section-title mb-3">Design principles</h2>
+      <div class="row g-4">
+        <div class="col-md-6 col-lg-3">
+          <div class="d-flex gap-3">
+            <span class="pill-icon" style="background:var(--grad-primary)"><i class="bi bi-bullseye"></i></span>
+            <div><h6 class="fw-bold">Data first</h6><p class="mb-0 text-muted small">Every number is computed from the dataset, never hard-coded.</p></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div class="d-flex gap-3">
+            <span class="pill-icon" style="background:var(--grad-cyan)"><i class="bi bi-universal-access"></i></span>
+            <div><h6 class="fw-bold">Accessible</h6><p class="mb-0 text-muted small">Semantic markup, focus states and reduced-motion support.</p></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div class="d-flex gap-3">
+            <span class="pill-icon" style="background:var(--grad-mint)"><i class="bi bi-phone"></i></span>
+            <div><h6 class="fw-bold">Responsive</h6><p class="mb-0 text-muted small">Mobile-first layouts from 360px up to wide desktops.</p></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div class="d-flex gap-3">
+            <span class="pill-icon" style="background:var(--grad-accent)"><i class="bi bi-speedometer"></i></span>
+            <div><h6 class="fw-bold">Lightweight</h6><p class="mb-0 text-muted small">CSS and 2D canvas only — no heavy 3D or animation libraries.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

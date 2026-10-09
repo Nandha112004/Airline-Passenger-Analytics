@@ -1,0 +1,406 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - AirAnalytics{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+{% load formatting %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div>
+    <span class="eyebrow"><i class="bi bi-airplane-engines-fill"></i> Live Operations Overview</span>
+    <h2 class="section-title mt-2 mb-1" id="greeting">Airline Analytics Overview</h2>
+    <p class="text-muted mb-0">Analyze historical passenger demand, discover seasonal travel patterns, and forecast future airline demand.</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="/trends/" class="btn btn-ghost btn-sm"><i class="bi bi-graph-up me-1"></i> Explore Trends</a>
+    <a href="/forecast/" class="btn btn-primary btn-sm"><i class="bi bi-magic me-1"></i> Generate Forecast</a>
+  </div>
+</div>
+
+{% if stats.count == 0 %}
+<div class="card-modern p-4 p-lg-5 mb-4">
+  <div class="empty-state">
+    <div class="empty-state__art"><i class="bi bi-airplane-engines"></i></div>
+    <h5>No Passenger Data</h5>
+    <p>Add passenger information to begin your analysis. Import an existing CSV, or create your first record manually.</p>
+    <div class="d-flex flex-wrap gap-2 justify-content-center">
+      <a href="/passengers/import/" class="btn btn-primary"><i class="bi bi-cloud-arrow-up me-2"></i> Import CSV</a>
+      <a href="/passengers/add/" class="btn btn-ghost"><i class="bi bi-plus-lg me-2"></i> Add Passenger</a>
+    </div>
+    <p class="mt-3 mb-0"><small class="text-muted">You can also run <code>python manage.py load_passenger_data</code> to load the sample dataset.</small></p>
+  </div>
+</div>
+{% endif %}
+
+<div class="row g-3 mb-4 stagger">
+  <div class="col-6 col-xl-2 col-lg-4 col-md-4">
+    <div class="card-modern hover-lift p-3 h-100 stat-card">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="stat-label">Total Passengers</span>
+        <div class="stat-icon stat-icon--sm" style="background:var(--grad-primary)"><i class="bi bi-people-fill"></i></div>
+      </div>
+      <div class="stat-value h4 mb-1 count-up" data-count="{{ stats.total|default:0 }}">{{ stats.total|default:0|thousands }}</div>
+      <small class="text-muted">{{ stats.count|thousands }} records &bull; Avg {{ stats.avg }}</small>
+      <div class="mt-2"><span class="badge badge-trend chip--success"><i class="bi bi-arrow-up"></i> {{ stats.overall_growth }}% overall</span></div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-2 col-lg-4 col-md-4">
+    <div class="card-modern hover-lift p-3 h-100 stat-card">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="stat-label">Avg Monthly</span>
+        <div class="stat-icon stat-icon--sm" style="background:var(--grad-cyan)"><i class="bi bi-calendar-month"></i></div>
+      </div>
+      <div class="stat-value h4 mb-1 count-up" data-count="{{ stats.avg }}" data-count-decimals="0">{{ stats.avg|thousands:0 }}</div>
+      <small class="text-muted">Per month average</small>
+      <div class="mt-2"><span class="badge badge-trend chip--primary">CAGR {{ stats.cagr }}%</span></div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-2 col-lg-4 col-md-4">
+    <div class="card-modern hover-lift p-3 h-100 stat-card">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="stat-label">Peak Month</span>
+        <div class="stat-icon stat-icon--sm" style="background:var(--grad-mint)"><i class="bi bi-arrow-up-circle-fill"></i></div>
+      </div>
+      {% if stats.peak %}
+        <div class="stat-value h6 mb-1">{{ stats.peak.month|date:"M Y" }}</div>
+        <small class="text-muted count-up" data-count="{{ stats.peak.passengers }}">{{ stats.peak.passengers|thousands }}</small>
+      {% else %}
+        <div class="small text-muted">No data</div>
+      {% endif %}
+      <div class="mt-2"><span class="badge badge-trend chip--success">Highest</span></div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-2 col-lg-4 col-md-4">
+    <div class="card-modern hover-lift p-3 h-100 stat-card">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="stat-label">Lowest Month</span>
+        <div class="stat-icon stat-icon--sm" style="background:var(--grad-sunset)"><i class="bi bi-arrow-down-circle-fill"></i></div>
+      </div>
+      {% if stats.low %}
+        <div class="stat-value h6 mb-1">{{ stats.low.month|date:"M Y" }}</div>
+        <small class="text-muted count-up" data-count="{{ stats.low.passengers }}">{{ stats.low.passengers|thousands }}</small>
+      {% else %}
+        <div class="small text-muted">No data</div>
+      {% endif %}
+      <div class="mt-2"><span class="badge badge-trend chip--warning">Lowest</span></div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-2 col-lg-4 col-md-4">
+    <div class="card-modern hover-lift p-3 h-100 stat-card">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="stat-label">Growth Rate</span>
+        <div class="stat-icon stat-icon--sm" style="background:var(--grad-accent)"><i class="bi bi-trending-up"></i></div>
+      </div>
+      <div class="stat-value h4 mb-1">{% if stats.last_yoy %}{{ stats.last_yoy }}%{% else %}{{ stats.overall_growth }}%{% endif %}</div>
+      <small class="text-muted">{% if stats.last_yoy %}Last YoY{% else %}Overall growth{% endif %}</small>
+      <div class="mt-2"><span class="badge badge-trend chip--accent">Year over year</span></div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-2 col-lg-4 col-md-4">
+    <div class="card-modern hover-lift p-3 h-100 stat-card" style="border-color:var(--primary)">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="stat-label">Forecast Next</span>
+        <div class="stat-icon stat-icon--sm" style="background:var(--grad-primary)"><i class="bi bi-magic"></i></div>
+      </div>
+      <div class="stat-value h4 mb-1 count-up" data-count="{{ forecast_next|default:0 }}">{{ forecast_next|default:0|thousands }}</div>
+      <small class="text-muted">Predicted next month</small>
+      <div class="mt-2"><a href="/forecast/" class="small fw-semibold">Generate &rarr;</a></div>
+    </div>
+  </div>
+</div>
+
+<div class="card-modern p-3 p-lg-4 mb-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h3 class="section-title h6 mb-0 d-flex align-items-center gap-2">
+      <span class="pill-icon pill-icon--sm" style="background:var(--grad-primary)"><i class="bi bi-activity"></i></span>
+      Demand Seasonality
+    </h3>
+    <span class="chip">Monthly average by month</span>
+  </div>
+  <div class="spark-bars" id="seasonalBars" aria-hidden="true">
+    {% for m in monthly %}<span style="height:{% widthratio m.avg stats.avg 100 %}%"></span>{% endfor %}
+  </div>
+  <div class="d-flex justify-content-between mt-2" style="font-size:.68rem;color:var(--muted);font-weight:700">
+    {% for m in monthly %}<span>{{ m.short_name }}</span>{% endfor %}
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-8">
+    <div class="card-modern hover-lift p-3 p-lg-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="section-title h6 mb-0 d-flex align-items-center gap-2">
+          <span class="pill-icon pill-icon--sm" style="background:var(--grad-primary)"><i class="bi bi-graph-up"></i></span>
+          Passenger Trend Over Time
+        </h3>
+        <span class="chip chip--primary">Monthly</span>
+      </div>
+      <div class="chart-shell" style="height:300px"><canvas id="trendChart" role="img" aria-label="Passenger trend line chart"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card-modern hover-lift p-3 p-lg-4 h-100">
+      <h3 class="section-title h6 mb-3 d-flex align-items-center gap-2">
+        <span class="pill-icon pill-icon--sm" style="background:var(--grad-cyan)"><i class="bi bi-bar-chart-fill"></i></span>
+        Yearly Passengers
+      </h3>
+      <div class="chart-shell" style="height:300px"><canvas id="yearlyChart" role="img" aria-label="Yearly passenger bar chart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-6">
+    <div class="card-modern hover-lift p-3 p-lg-4">
+      <h3 class="section-title h6 mb-3 d-flex align-items-center gap-2">
+        <span class="pill-icon pill-icon--sm" style="background:var(--grad-mint)"><i class="bi bi-calendar-week"></i></span>
+        Seasonal Analysis
+      </h3>
+      <div class="chart-shell" style="height:280px"><canvas id="seasonalChart" role="img" aria-label="Average passengers by month"></canvas></div>
+      <div class="alert alert-info small mt-3 mb-0">{{ seasonal.insight }}</div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card-modern hover-lift p-3 p-lg-4">
+      <h3 class="section-title h6 mb-3 d-flex align-items-center gap-2">
+        <span class="pill-icon pill-icon--sm" style="background:var(--grad-accent)"><i class="bi bi-graph-up-arrow"></i></span>
+        Year-over-Year Growth
+      </h3>
+      <div class="chart-shell" style="height:280px"><canvas id="growthChart" role="img" aria-label="Year over year growth chart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="card-modern hover-lift p-3 p-lg-4 mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="section-title h6 mb-0 d-flex align-items-center gap-2">
+      <span class="pill-icon pill-icon--sm" style="background:var(--grad-sunset)"><i class="bi bi-grid-3x3"></i></span>
+      Passenger Heatmap
+    </h3>
+    <a href="/visualizations/" class="btn btn-sm btn-ghost">View Details <i class="bi bi-arrow-right ms-1"></i></a>
+  </div>
+  <div id="heatmap" class="overflow-auto"></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card-modern hover-lift p-3">
+      <h3 class="section-title h6 mb-3"><i class="bi bi-rocket-takeoff me-2 text-primary"></i> Quick Actions</h3>
+      <div class="d-grid gap-2">
+        <a href="/passengers/add/" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i> Add Passenger Data</a>
+        <a href="/passengers/import/" class="btn btn-ghost btn-sm"><i class="bi bi-cloud-arrow-up me-1"></i> Import CSV</a>
+        <a href="/passengers/export/" class="btn btn-ghost btn-sm"><i class="bi bi-download me-1"></i> Export CSV</a>
+        <a href="/reports/" class="btn btn-ghost btn-sm"><i class="bi bi-file-earmark-text me-1"></i> Open Report</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card-modern hover-lift p-3">
+      <h3 class="section-title h6 mb-3">Recent Yearly Stats</h3>
+      <div class="table-responsive">
+        <table class="table table-modern table-sm mb-0">
+          <thead><tr><th>Year</th><th>Total</th><th>Avg</th><th>YoY %</th><th>Peak</th></tr></thead>
+          <tbody>
+            {% for y in yearly|slice:"-5:" %}
+            <tr><td class="fw-semibold">{{ y.year }}</td><td>{{ y.total }}</td><td>{{ y.avg|floatformat:0 }}</td><td>{% if y.yoy_growth %}<span class="badge badge-trend {% if y.yoy_growth > 0 %}chip--success{% else %}chip--danger{% endif %}">{{ y.yoy_growth|floatformat:1 }}%</span>{% else %}&mdash;{% endif %}</td><td class="small">{{ y.peak_month }} ({{ y.peak_value }})</td></tr>
+            {% empty %}<tr><td colspan="5" class="text-center text-muted">No data</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card-modern hover-lift p-3 p-lg-4 mt-3">
+  <div class="row g-4 align-items-center">
+    <div class="col-lg-5">
+      <span class="eyebrow"><i class="bi bi-ticket-perforated"></i> Dataset Boarding Pass</span>
+      <h3 class="section-title h5 mt-2 mb-2">Monthly Demand Boarding Pass</h3>
+      <p class="small text-muted mb-3">A compact travel-style summary of the current dataset, drawn straight from the analytics engine.</p>
+      <div class="d-flex flex-wrap gap-2">
+        <span class="chip chip--primary"><i class="bi bi-database"></i> {{ stats.count|thousands }} records</span>
+        <span class="chip chip--success"><i class="bi bi-graph-up-arrow"></i> {{ stats.overall_growth }}% growth</span>
+        <span class="chip chip--accent"><i class="bi bi-calendar-heart"></i> Peak {{ stats.peak.month|date:"M Y" }}</span>
+      </div>
+    </div>
+    <div class="col-lg-7">
+      <div class="boarding-pass">
+        <div class="p-3 flex-grow-1">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="brand-badge" style="width:32px;height:32px;font-size:.85rem">✈</span>
+            <span class="brand-sub">AIRANALYTICS</span>
+          </div>
+          <div class="row g-2 small">
+            <div class="col-6">
+              <div class="text-muted" style="font-size:.66rem;letter-spacing:.08em">ORIGIN</div>
+              <div class="fw-bold">DATASET</div>
+            </div>
+            <div class="col-6">
+              <div class="text-muted" style="font-size:.66rem;letter-spacing:.08em">DESTINATION</div>
+              <div class="fw-bold">DEMAND</div>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2 my-2">
+            <span class="route-dot" style="left:0"></span>
+            <span class="route-line"></span>
+            <i class="bi bi-airplane-fill text-primary"></i>
+          </div>
+          <div class="d-flex justify-content-between small">
+            <span><span class="text-muted d-block" style="font-size:.64rem">BOARDING</span>
+              <strong>{{ stats.peak.month|date:"M Y" }}</strong></span>
+            <span class="text-end"><span class="text-muted d-block" style="font-size:.64rem">PEAK LOAD</span>
+              <strong>{{ stats.peak.passengers|default:"—" }}</strong></span>
+          </div>
+        </div>
+        <div class="boarding-pass__stub">
+          <div class="text-muted" style="font-size:.62rem;letter-spacing:.08em">FLIGHT NO.</div>
+          <div class="boarding-pass__code">AA-{{ stats.count|stringformat:"03d" }}</div>
+          <div class="d-flex align-items-center gap-1 small mt-1">
+            <span class="pulse-dot"></span> <span class="text-muted">Live</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script id="aaDashData" type="application/json">
+{
+  "trend": {{ trend_data_json|safe }},
+  "yearly": {{ yearly_chart_json|safe }},
+  "monthly": {{ monthly_chart_json|safe }},
+  "heatmap": {{ heatmap_json|safe }}
+}
+</script>
+<script>
+(function () {
+  const D = JSON.parse(document.getElementById('aaDashData').textContent);
+  const AA = window.AirAnalytics;
+
+  if (!window.AACharts || !window.AACharts.ready) { return; }
+
+  function pct(v) { return v + '%'; }
+
+  function build() {
+    if (D.trend && D.trend.length) {
+      AACharts.create({
+        id: 'trendChart', type: 'area', shape: 'cartesian',
+        labels: D.trend.map(function (d) { return d.month_str; }),
+        datasets: [{ label: 'Passengers', data: D.trend.map(function (d) { return d.passengers; }) }],
+        maxTicks: 12
+      });
+    }
+
+    if (D.yearly && D.yearly.length) {
+      AACharts.create({
+        id: 'yearlyChart', type: 'bar', shape: 'cartesian',
+        labels: D.yearly.map(function (d) { return d.year; }),
+        datasets: [{ label: 'Total', data: D.yearly.map(function (d) { return d.total; }) }]
+      });
+
+      const yoy = [null];
+      for (let i = 1; i < D.yearly.length; i++) {
+        const prev = D.yearly[i - 1].total, cur = D.yearly[i].total;
+        yoy.push(prev ? +((cur - prev) / prev * 100).toFixed(1) : null);
+      }
+      AACharts.create({
+        id: 'growthChart', type: 'bar', shape: 'cartesian',
+        labels: D.yearly.map(function (d) { return d.year; }),
+        datasets: [{
+          label: 'YoY Growth', data: yoy,
+          backgroundColor: yoy.map(function (v) {
+            if (v === null) return 'rgba(148,163,184,.35)';
+            return v > 0 ? '#10B981' : '#EF4444';
+          })
+        }],
+        yFormat: pct,
+        tooltipCallbacks: {
+          label: function (c) { return c.parsed.y === null ? 'Base year' : c.parsed.y.toFixed(1) + '%'; }
+        }
+      });
+    }
+
+    if (D.monthly && D.monthly.length) {
+      AACharts.create({
+        id: 'seasonalChart', type: 'bar', shape: 'cartesian',
+        labels: D.monthly.map(function (d) { return d.short_name; }),
+        datasets: [{
+          label: 'Avg Passengers',
+          data: D.monthly.map(function (d) { return +Number(d.avg).toFixed(1); }),
+          backgroundColor: D.monthly.map(function (d) {
+            var s = d.seasonal_index;
+            return s > 105 ? '#10B981' : s < 95 ? '#F59E0B' : '#06B6D4';
+          })
+        }]
+      });
+    }
+  }
+
+  /* ---------- heatmap: real values, theme + palette aware ---------- */
+  function drawHeatmap() {
+    const hm = document.getElementById('heatmap');
+    const H = D.heatmap;
+    if (!hm || !H || !H.years || !H.years.length) return;
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const dark = AA.isDark();
+    const base = (AACharts.PALETTES[AACharts.get().palette] || AACharts.PALETTES.ocean).swatch[0];
+    const rgb = hexToRgb(base);
+    let html = '<div class="table-responsive"><table class="table table-sm table-modern mb-0 heatmap-table"><thead><tr><th>Year</th>';
+    months.forEach(function (m) { html += '<th class="text-center">' + m + '</th>'; });
+    html += '</tr></thead><tbody>';
+    H.years.forEach(function (y, yi) {
+      html += '<tr><td class="fw-bold">' + y + '</td>';
+      H.data[yi].forEach(function (val, mi) {
+        if (val === null) {
+          html += '<td class="text-center"><span class="heatmap-cell heatmap-cell--empty">&mdash;</span></td>';
+          return;
+        }
+        const ratio = (val - H.min) / ((H.max - H.min) || 1);
+        const a = (0.12 + ratio * 0.88).toFixed(2);
+        const color = ratio > 0.55 ? '#fff' : (dark ? '#E2E8F0' : '#0F172A');
+        html += '<td class="text-center"><span class="heatmap-cell" style="background:rgba(' +
+          rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + a + ');color:' + color + '"' +
+          ' title="' + y + '-' + String(H.months[mi] || mi + 1).padStart(2, '0') + ' — ' + val + ' passengers">' +
+          val + '</span></td>';
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    hm.innerHTML = html;
+  }
+
+  function hexToRgb(c) {
+    var h = c.replace('#', '');
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    return {
+      r: parseInt(h.slice(0, 2), 16) || 37,
+      g: parseInt(h.slice(2, 4), 16) || 99,
+      b: parseInt(h.slice(4, 6), 16) || 235
+    };
+  }
+
+  function renderAll() {
+    build();
+    drawHeatmap();
+  }
+
+  window.AA_ready(function () {
+    AACharts.init();
+    renderAll();
+    window.addEventListener('themeChanged', drawHeatmap);
+
+    /* ---------- time-aware greeting ---------- */
+    var g = document.getElementById('greeting');
+    if (g) {
+      var h = new Date().getHours();
+      var word = h < 5 ? 'Working Late'
+        : h < 12 ? 'Good Morning'
+        : h < 17 ? 'Good Afternoon'
+        : h < 21 ? 'Good Evening'
+        : 'Good Night';
+      var name = '{{ request.user.username|default:"Analyst"|escapejs }}';
+      g.textContent = word + ', ' + name + ' — Airline Analytics Overview';
+    }
+  });
+})();
+</script>
+{% endblock %}

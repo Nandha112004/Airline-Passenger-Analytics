@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% block title %}Forecasting - AirAnalytics{% endblock %}
+{% block page_title %}Demand Forecasting{% endblock %}
+{% block content %}
+<div class="row g-3 mb-4">
+  <div class="col-lg-4">
+    <div class="card-modern p-4">
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <span class="pill-icon pill-icon--sm" style="background:var(--grad-primary)"><i class="bi bi-magic"></i></span>
+        <h5 class="fw-bold mb-0">Generate Forecast</h5>
+      </div>
+      <form method="post" id="forecastForm">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.model.id_for_label }}"><i class="bi bi-cpu me-1"></i>{{ form.model.label }}</label>
+          {{ form.model }}
+          {% if form.model.help_text %}<div class="form-text">{{ form.model.help_text }}</div>{% endif %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.period.id_for_label }}"><i class="bi bi-calendar-range me-1"></i>{{ form.period.label }}</label>
+          {{ form.period }}
+          {% if form.period.help_text %}<div class="form-text">{{ form.period.help_text }}</div>{% endif %}
+        </div>
+        <div class="mb-3" id="maWindowGroup" style="display:none">
+          <label class="form-label" for="{{ form.ma_window.id_for_label }}"><i class="bi bi-window me-1"></i>{{ form.ma_window.label }}</label>
+          {{ form.ma_window }}
+          <div class="form-text">Default 12 months</div>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <span class="chip chip--primary"><i class="bi bi-cpu"></i> 3 models</span>
+          <span class="chip chip--accent"><i class="bi bi-pie-chart"></i> 20% test split</span>
+          <span class="chip"><i class="bi bi-bar-chart"></i> MAE / RMSE / MAPE / R&sup2;</span>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 magnetic" id="generateBtn">
+          <span id="btnText"><i class="bi bi-play-fill me-1"></i> Generate Forecast</span>
+          <span id="btnLoader" class="d-none"><span class="spinner-border spinner-border-sm me-2"></span> Generating&hellip;</span>
+        </button>
+        <div id="genProgress" class="d-none mt-3" aria-live="polite">
+          <div class="progress mb-2" role="progressbar" aria-label="Forecast progress" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" id="genBar" style="width:0%"></div>
+          </div>
+          <small class="text-muted" id="genStatus">Fitting model&hellip;</small>
+        </div>
+      </form>
+
+      {% if comparison %}
+      <div class="mt-4 pt-3" style="border-top:1px solid var(--border)">
+        <h6 class="fw-bold small mb-2"><i class="bi bi-trophy me-1"></i> Model Comparison (test split 20%)</h6>
+        <div class="table-responsive">
+          <table class="table table-sm table-modern mb-0" style="font-size:.8rem">
+            <thead><tr><th>Model</th><th>MAE</th><th>RMSE</th><th>MAPE</th><th>R&sup2;</th></tr></thead>
+            <tbody>
+              <tr><td>Linear</td><td>{{ comparison.linear.mae|default:"—" }}</td><td>{{ comparison.linear.rmse|default:"—" }}</td><td>{{ comparison.linear.mape|default:"—" }}%</td><td>{{ comparison.linear.r2|default:"—" }}</td></tr>
+              <tr><td>Moving Avg</td><td>{{ comparison.moving_average.mae|default:"—" }}</td><td>{{ comparison.moving_average.rmse|default:"—" }}</td><td>{{ comparison.moving_average.mape|default:"—" }}%</td><td>{{ comparison.moving_average.r2|default:"—" }}</td></tr>
+              <tr><td>Seasonal</td><td>{{ comparison.seasonal.mae|default:"—" }}</td><td>{{ comparison.seasonal.rmse|default:"—" }}</td><td>{{ comparison.seasonal.mape|default:"—" }}%</td><td>{{ comparison.seasonal.r2|default:"—" }}</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <small class="text-muted d-block mt-2"><i class="bi bi-info-circle me-1"></i>Lower MAE / RMSE / MAPE is better &bull; R&sup2; closer to 1 is better</small>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card-modern p-3 p-lg-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0 d-flex align-items-center gap-2">
+          <span class="pill-icon pill-icon--sm" style="background:var(--grad-mint)"><i class="bi bi-graph-up-arrow"></i></span>
+          Historical vs Predicted
+        </h6>
+        <span class="chip" id="modelBadge">{% if forecast_result %}{{ forecast_result.model }}{% else %}No forecast{% endif %}</span>
+      </div>
+      <div class="chart-shell" style="height:320px"><canvas id="forecastChart" role="img" aria-label="Forecast chart comparing historical and predicted passengers"></canvas></div>
+      <div class="d-flex flex-wrap gap-2 mt-3">
+        <button class="btn btn-ghost btn-sm" onclick="downloadCSV()"><i class="bi bi-download me-1"></i> Download Forecast CSV</button>
+        <button class="btn btn-ghost btn-sm" onclick="fetchAPI()"><i class="bi bi-code me-1"></i> Fetch via API</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if forecast_result %}
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card-modern p-3 p-lg-4">
+      <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+        <span class="pill-icon pill-icon--sm" style="background:var(--grad-primary)"><i class="bi bi-table"></i></span>
+        Forecast &mdash; {{ forecast_result.periods }} months ({{ forecast_result.model }})
+      </h6>
+      <div class="table-responsive" style="max-height:360px">
+        <table class="table table-modern table-sm mb-0">
+          <thead><tr><th scope="col">Month</th><th scope="col">Predicted Passengers</th></tr></thead>
+          <tbody>{% for r in forecast_result.table %}<tr><td class="fw-semibold">{{ r.month }}</td><td><span class="badge badge-trend chip--primary">{{ r.predicted }}</span></td></tr>{% endfor %}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card-modern p-3 p-lg-4">
+      <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+        <span class="pill-icon pill-icon--sm" style="background:var(--grad-accent)"><i class="bi bi-speedometer"></i></span>
+        Model Performance
+      </h6>
+      <div class="row g-2 text-center">
+        <div class="col-6 col-md-3"><div class="p-3 rounded-3" style="background:var(--bg-subtle);border:1px solid var(--border)"><small class="text-muted d-block">MAE</small><div class="fw-bold">{{ forecast_result.metrics.mae }}</div></div></div>
+        <div class="col-6 col-md-3"><div class="p-3 rounded-3" style="background:var(--bg-subtle);border:1px solid var(--border)"><small class="text-muted d-block">RMSE</small><div class="fw-bold">{{ forecast_result.metrics.rmse }}</div></div></div>
+        <div class="col-6 col-md-3"><div class="p-3 rounded-3" style="background:var(--bg-subtle);border:1px solid var(--border)"><small class="text-muted d-block">MAPE</small><div class="fw-bold">{{ forecast_result.metrics.mape }}%</div></div></div>
+        <div class="col-6 col-md-3"><div class="p-3 rounded-3" style="background:var(--bg-subtle);border:1px solid var(--border)"><small class="text-muted d-block">R&sup2;</small><div class="fw-bold">{{ forecast_result.metrics.r2 }}</div></div></div>
+      </div>
+
+      {% if forecast_result.metrics.mape %}
+      <div class="mt-4">
+        <div class="d-flex justify-content-between small mb-1">
+          <span class="text-muted">MAPE accuracy</span>
+          <span class="fw-bold">{{ forecast_result.metrics.mape }}% error</span>
+        </div>
+        <div class="progress" role="progressbar" aria-label="MAPE" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ forecast_result.metrics.mape }}">
+          <div class="progress-bar {% if forecast_result.metrics.mape < 20 %}bg-success{% elif forecast_result.metrics.mape < 40 %}bg-warning{% else %}bg-danger{% endif %}" style="width:{% widthratio forecast_result.metrics.mape 100 100 %}%"></div>
+        </div>
+        <small class="text-muted d-block mt-2"><i class="bi bi-info-circle me-1"></i>Lower percentage error means a more reliable model.</small>
+      </div>
+      {% endif %}
+
+      <h6 class="fw-bold small mt-4 mb-2">All Models Compared</h6>
+      <div class="table-responsive">
+        <table class="table table-sm table-modern mb-0" style="font-size:.8rem">
+          <thead><tr><th>Model</th><th>MAE</th><th>RMSE</th><th>MAPE</th><th>R&sup2;</th></tr></thead>
+          <tbody>
+            {% for key, val in forecast_result.comparison.items %}
+            <tr class="{% if key == forecast_result.model %}table-active{% endif %}">
+              <td class="fw-semibold">{% if key == forecast_result.model %}<i class="bi bi-check-circle-fill text-success me-1"></i>{% endif %}{{ key }}</td>
+              <td>{{ val.mae|default:"—" }}</td><td>{{ val.rmse|default:"—" }}</td><td>{{ val.mape|default:"—" }}%</td><td>{{ val.r2|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card-modern p-5">
+  <div class="empty-state">
+    <div class="empty-state__art"><i class="bi bi-magic"></i></div>
+    <h5>No forecast generated yet</h5>
+    <p>Pick a model and a period, then click <strong>Generate Forecast</strong>. The chart will overlay predicted demand on top of the historical series.</p>
+    <div class="d-flex flex-wrap gap-2 justify-content-center">
+      <span class="chip chip--primary"><i class="bi bi-1-circle"></i> Choose a model</span>
+      <span class="chip chip--primary"><i class="bi bi-2-circle"></i> Set the period</span>
+      <span class="chip chip--success"><i class="bi bi-3-circle"></i> Generate &amp; compare</span>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script id="chartData" type="application/json">{{ chart_data_json|safe }}</script>
+{% endblock %}
+{% block extra_js %}
+<script>
+const chartData = JSON.parse(document.getElementById('chartData').textContent);
+
+function renderChart(){
+  if(!window.AACharts || !window.AACharts.ready) return;
+  const hist=chartData.historical||[];
+  const fore=chartData.forecast||[];
+  if(!hist.length || !fore.length) return;
+  const allLabels=[...hist.map(h=>h.month), ...fore.map(f=>f.month)];
+  const histData=[...hist.map(h=>h.passengers), ...Array(fore.length).fill(null)];
+  const foreData=[...Array(hist.length).fill(null), ...fore.map(f=>f.predicted)];
+  // For gap bridging, add last hist point to forecast line
+  foreData[hist.length-1]=hist[hist.length-1].passengers;
+  AACharts.create({
+    id:'forecastChart', type:'line', shape:'cartesian',
+    labels:allLabels,
+    datasets:[
+      {label:'Historical', data:histData},
+      {label:'Forecast', data:foreData, borderDash:[6,4], backgroundColor:'rgba(245,158,11,.10)', borderColor:'#F59E0B', pointBackgroundColor:'#F59E0B'}
+    ],
+    legend:true, maxTicks:12
+  });
+}
+window.AA_ready(function(){ AACharts.init(); renderChart(); });
+
+document.getElementById('forecastForm')?.addEventListener('submit',()=>{
+  document.getElementById('btnText').classList.add('d-none');
+  document.getElementById('btnLoader').classList.remove('d-none');
+  const wrap=document.getElementById('genProgress');
+  const bar=document.getElementById('genBar');
+  const label=document.getElementById('genStatus');
+  if(!wrap||!bar) return;
+  wrap.classList.remove('d-none');
+  const steps=[
+    'Preparing dataset — validating monthly records…',
+    'Fitting the selected model on historical demand…',
+    'Scoring the model against a held-out test split…',
+    'Building the forecast table and confidence range…'
+  ];
+  let i=0;
+  const timer=setInterval(()=>{
+    bar.style.width=Math.min(95,Math.round(((i+1)/steps.length)*100))+'%';
+    if(label) label.textContent=steps[i];
+    i+=1;
+    if(i>=steps.length) clearInterval(timer);
+  },520);
+});
+
+const modelSelect=document.querySelector('select[name=model]');
+const maGroup=document.getElementById('maWindowGroup');
+function toggleMA(){
+  if(modelSelect && maGroup){
+    maGroup.style.display = modelSelect.value==='moving_average' ? 'block' : 'none';
+  }
+}
+if(modelSelect){modelSelect.addEventListener('change',toggleMA);toggleMA();}
+
+function downloadCSV(){
+  const fore=chartData.forecast||[];
+  if(!fore.length){alert('No forecast to download');return;}
+  let csv='Month,Predicted Passengers\n';
+  fore.forEach(r=>csv+=`${r.month},${r.predicted}\n`);
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='forecast.csv';a.click();URL.revokeObjectURL(url);
+}
+async function fetchAPI(){
+  const model=document.querySelector('select[name=model]')?.value||'linear';
+  const period=document.querySelector('select[name=period]')?.value||12;
+  const res=await fetch(`/forecast/api/?model=${model}&period=${period}`);
+  const data=await res.json();
+  if(data.error){alert(data.error);return;}
+  chartData.historical=data.historical;
+  chartData.forecast=data.forecast.map(f=>({month:f.month,predicted:f.predicted}));
+  document.getElementById('modelBadge').textContent=model;
+  renderChart();
+  alert('Fetched via API: '+data.forecast.length+' months');
+}
+</script>
+{% endblock %}

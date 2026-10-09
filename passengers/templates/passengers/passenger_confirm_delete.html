@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Delete - AirAnalytics{% endblock %}
+{% block page_title %}Delete Record{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-6">
+<div class="card-modern p-4 text-center">
+  <div class="text-danger mb-3" style="font-size:2.5rem"><i class="bi bi-exclamation-triangle-fill"></i></div>
+  <h5>Delete {{ object.month|date:"F Y" }}?</h5>
+  <p class="text-muted small">This will permanently delete the record with {{ object.passengers }} passengers.</p>
+  <form method="post">{% csrf_token %}<button type="submit" class="btn btn-danger">Yes, Delete</button> <a href="/passengers/" class="btn btn-outline-secondary">Cancel</a></form>
+</div>
+</div></div>
+{% endblock %}

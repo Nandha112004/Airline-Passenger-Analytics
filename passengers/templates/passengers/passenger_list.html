@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}Passenger Data - AirAnalytics{% endblock %}
+{% block page_title %}Passenger Data{% endblock %}
+{% block content %}
+{% load formatting %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <span class="eyebrow"><i class="bi bi-people-fill"></i> Data Management</span>
+    <h5 class="fw-bold mb-1 mt-2">Passenger Records</h5>
+    <p class="small text-muted mb-0">Manage historical airline passenger data &bull; <strong class="count-up" data-count="{{ page_obj.paginator.count }}">{{ page_obj.paginator.count|thousands }}</strong> records</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="/passengers/add/" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i> Add Data</a>
+    <a href="/passengers/import/" class="btn btn-ghost btn-sm"><i class="bi bi-cloud-arrow-up me-1"></i> Import CSV</a>
+    <a href="/passengers/export/?{{ query_params }}" class="btn btn-ghost btn-sm"><i class="bi bi-download me-1"></i> Export</a>
+  </div>
+</div>
+
+<div class="card-modern p-3 mb-3">
+  <form method="get" class="row g-2 align-items-end">
+    <div class="col-6 col-md-2">
+      <label class="form-label small" for="f-search">Search</label>
+      <input type="text" id="f-search" name="search" value="{{ request.GET.search }}" class="form-control form-control-sm" placeholder="Year/month/passengers">
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label small" for="f-year">Year</label>
+      <select name="year" id="f-year" class="form-select form-select-sm">
+        <option value="">All Years</option>
+        {% for y in years_list %}<option value="{{ y }}" {% if request.GET.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-md-1">
+      <label class="form-label small" for="f-month">Month</label>
+      <select name="month" id="f-month" class="form-select form-select-sm">
+        <option value="">All</option>
+        {% for i in "123456789012"|make_list %}<option value="{{ forloop.counter }}" {% if request.GET.month == forloop.counter|stringformat:"s" %}selected{% endif %}>{{ forloop.counter }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label small" for="f-min">Min Passengers</label>
+      <input type="number" id="f-min" name="min_passengers" value="{{ request.GET.min_passengers }}" class="form-control form-control-sm" placeholder="Min">
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label small" for="f-max">Max Passengers</label>
+      <input type="number" id="f-max" name="max_passengers" value="{{ request.GET.max_passengers }}" class="form-control form-control-sm" placeholder="Max">
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label small" for="f-sort">Sort</label>
+      <select name="sort" id="f-sort" class="form-select form-select-sm">
+        <option value="month" {% if request.GET.sort == "month" %}selected{% endif %}>Date Asc</option>
+        <option value="-month" {% if request.GET.sort == "-month" %}selected{% endif %}>Date Desc</option>
+        <option value="passengers" {% if request.GET.sort == "passengers" %}selected{% endif %}>Passengers Asc</option>
+        <option value="-passengers" {% if request.GET.sort == "-passengers" %}selected{% endif %}>Passengers Desc</option>
+      </select>
+    </div>
+    <div class="col-12 col-md-1 d-flex gap-1">
+      <button type="submit" class="btn btn-primary btn-sm flex-grow-1" title="Apply filters" aria-label="Apply filters"><i class="bi bi-search"></i></button>
+      <a href="/passengers/" class="btn btn-ghost btn-sm" title="Clear filters" aria-label="Clear filters"><i class="bi bi-x-lg"></i></a>
+    </div>
+  </form>
+  {% if request.GET.search or request.GET.year or request.GET.month or request.GET.min_passengers or request.GET.max_passengers %}
+  <div class="d-flex flex-wrap gap-2 mt-3 pt-3" style="border-top:1px solid var(--border)">
+    <span class="small text-muted">Active filters:</span>
+    {% if request.GET.search %}<span class="chip chip--primary">Search: {{ request.GET.search }}</span>{% endif %}
+    {% if request.GET.year %}<span class="chip chip--primary">Year: {{ request.GET.year }}</span>{% endif %}
+    {% if request.GET.month %}<span class="chip chip--primary">Month: {{ request.GET.month }}</span>{% endif %}
+    {% if request.GET.min_passengers %}<span class="chip chip--success">Min: {{ request.GET.min_passengers }}</span>{% endif %}
+    {% if request.GET.max_passengers %}<span class="chip chip--success">Max: {{ request.GET.max_passengers }}</span>{% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<div class="card-modern p-0 overflow-hidden">
+  <div class="table-responsive">
+    <table class="table table-modern table-hover mb-0 align-middle">
+      <thead><tr><th scope="col">Month</th><th scope="col">Year</th><th scope="col">Passengers</th><th scope="col">Growth %</th><th scope="col" class="text-end">Actions</th></tr></thead>
+      <tbody>
+        {% for obj in page_obj %}
+        <tr>
+          <td class="fw-semibold">{{ obj.month|date:"F Y" }} <small class="text-muted">{{ obj.month|date:"Y-m" }}</small></td>
+          <td>{{ obj.month|date:"Y" }}</td>
+          <td><span class="badge badge-trend chip--primary">{{ obj.passengers }}</span></td>
+          <td>
+            {% for id, growth in growth_map.items %}
+              {% if id == obj.id %}
+                {% if growth is not None %}
+                  <span class="badge badge-trend {% if growth > 0 %}chip--success{% elif growth < 0 %}chip--danger{% else %}chip--muted{% endif %}">
+                    {% if growth > 0 %}<i class="bi bi-arrow-up-short"></i>{% elif growth < 0 %}<i class="bi bi-arrow-down-short"></i>{% endif %} {{ growth }}%
+                  </span>
+                {% else %}<span class="text-muted small">&mdash; base</span>{% endif %}
+              {% endif %}
+            {% endfor %}
+          </td>
+          <td class="text-end text-nowrap">
+            <a href="/passengers/edit/{{ obj.id }}/" class="btn btn-sm btn-ghost" title="Edit record" aria-label="Edit record"><i class="bi bi-pencil"></i></a>
+            <button class="btn btn-sm btn-ghost btn-danger-ghost" data-bs-toggle="modal" data-bs-target="#deleteModal{{ obj.id }}" title="Delete record" aria-label="Delete record"><i class="bi bi-trash"></i></button>
+            <!-- Modal -->
+            <div class="modal fade" id="deleteModal{{ obj.id }}" tabindex="-1" aria-hidden="true" aria-labelledby="deleteLabel{{ obj.id }}">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content glass-modal">
+                  <div class="modal-header border-0 pb-0">
+                    <div class="d-flex align-items-center gap-2">
+                      <span class="pill-icon pill-icon--sm" style="background:var(--grad-sunset)"><i class="bi bi-exclamation-triangle"></i></span>
+                      <h6 class="modal-title mb-0" id="deleteLabel{{ obj.id }}">Confirm Deletion</h6>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <p class="mb-0">Are you sure you want to delete <strong>{{ obj.month|date:"F Y" }}</strong> with <strong>{{ obj.passengers }}</strong> passengers? This cannot be undone.</p>
+                  </div>
+                  <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-ghost btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <form method="post" action="/passengers/delete/{{ obj.id }}/" class="d-inline">{% csrf_token %}<button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash me-1"></i>Delete</button></form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="p-0">
+          <div class="empty-state">
+            <div class="empty-state__art"><i class="bi bi-inboxes"></i></div>
+            <h5>{% if request.GET.search or request.GET.year or request.GET.month %}No matching records{% else %}No passenger data yet{% endif %}</h5>
+            <p>{% if request.GET.search or request.GET.year or request.GET.month %}Try widening or clearing the filters above.{% else %}Add your first record manually, import an existing CSV, or load the built-in sample dataset to explore the analytics.{% endif %}</p>
+            {% if request.GET.search or request.GET.year or request.GET.month %}
+            <a href="/passengers/" class="btn btn-primary"><i class="bi bi-x-lg me-2"></i> Clear Filters</a>
+            {% else %}
+            <div class="d-flex flex-wrap gap-2 justify-content-center">
+              <a href="/passengers/add/" class="btn btn-primary"><i class="bi bi-plus-lg me-2"></i> Add Data</a>
+              <a href="/passengers/import/" class="btn btn-ghost"><i class="bi bi-cloud-arrow-up me-2"></i> Import CSV</a>
+            </div>
+            {% endif %}
+          </div>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if page_obj.has_other_pages %}
+  <div class="p-3 d-flex justify-content-between align-items-center">
+    <small class="text-muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</small>
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ query_params }}">Previous</a></li>{% endif %}
+        {% for num in page_obj.paginator.page_range %}{% if page_obj.number == num %}<li class="page-item active"><span class="page-link">{{ num }}</span></li>{% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}<li class="page-item"><a class="page-link" href="?page={{ num }}&{{ query_params }}">{{ num }}</a></li>{% endif %}{% endfor %}
+        {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ query_params }}">Next</a></li>{% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

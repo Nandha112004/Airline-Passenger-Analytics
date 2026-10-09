@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Settings - AirAnalytics{% endblock %}
+{% block page_title %}Settings{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card-modern p-4">
+      <h5 class="fw-bold mb-3"><i class="bi bi-person-circle me-2 text-primary"></i> User Profile</h5>
+      {% if user.is_authenticated %}
+      <div class="d-flex align-items-center gap-3 mb-3">
+        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:56px;height:56px;background:var(--primary);color:#fff;font-size:1.4rem">{{ user.username|slice:":1"|upper }}</div>
+        <div><div class="fw-bold">{{ user.username }}</div><div class="small text-muted">{{ user.email|default:"No email" }}</div><small class="text-muted">Last login: {{ user.last_login|date:"Y-m-d H:i" }}</small></div>
+      </div>
+      <div class="d-flex gap-2">
+        <form method="post" action="/logout/">{% csrf_token %}<button type="submit" class="btn btn-outline-danger btn-sm">Logout</button></form>
+        <a href="/admin/" class="btn btn-outline-primary btn-sm">Admin Panel</a>
+      </div>
+      {% else %}
+      <p class="text-muted small">Not logged in.</p><a href="/login/" class="btn btn-primary btn-sm">Login</a>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card-modern p-4">
+      <h5 class="fw-bold mb-3"><i class="bi bi-palette me-2 text-warning"></i> Appearance</h5>
+      <div class="d-flex justify-content-between align-items-center p-3 rounded mb-2" style="background:var(--bg);border:1px solid var(--border)">
+        <div><div class="fw-semibold small">Dark Mode</div><small class="text-muted">Toggle theme preference</small></div>
+        <button class="btn btn-sm btn-primary" onclick="toggleTheme()">Toggle Theme</button>
+      </div>
+      <small class="text-muted">Theme preference is stored in localStorage and persists across sessions. Charts adapt dynamically.</small>
+      <hr style="border-color:var(--border)">
+      <h6 class="fw-bold small">System Info</h6>
+      <ul class="small text-muted mb-0">
+        <li>Django 5.1 • SQLite • Bootstrap 5 • Chart.js</li>
+        <li>Pandas • NumPy • Scikit-learn • Statsmodels</li>
+        <li>Responsive: Desktop / Tablet / Mobile</li>
+      </ul>
+    </div>
+  </div>
+</div>
+<div class="card-modern p-4 mt-4">
+  <h5 class="fw-bold mb-3">About This Project</h5>
+  <p class="small text-muted">Airline Passenger Trend Analysis and Demand Forecasting System — a production-style analytics dashboard demonstrating Python, Django, database management, data analysis, statistics, machine learning (time-series forecasting), and data visualization. Suitable for portfolio, viva, and business intelligence demos.</p>
+  <div class="d-flex gap-2">
+    <a href="/dashboard/" class="btn btn-primary btn-sm">Go to Dashboard</a>
+    <a href="/visualizations/" class="btn btn-outline-primary btn-sm">View Visualizations</a>
+  </div>
+</div>
+{% endblock %}

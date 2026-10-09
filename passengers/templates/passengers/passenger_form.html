@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} - AirAnalytics{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card-modern p-4 p-lg-5 fade-in">
+      <div class="d-flex align-items-center gap-3 mb-4">
+        <span class="pill-icon" style="background:var(--grad-primary)"><i class="bi bi-database-add"></i></span>
+        <div>
+          <h5 class="fw-bold mb-1">{{ title }}</h5>
+          <p class="small text-muted mb-0">One record = one calendar month of total airline passengers.</p>
+        </div>
+      </div>
+
+      {% if form.non_field_errors %}
+      <div class="alert alert-danger small d-flex gap-2 align-items-start">
+        <i class="bi bi-exclamation-octagon-fill"></i><div>{{ form.non_field_errors }}</div>
+      </div>
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="mb-3">
+          {% if field.name == "month" %}
+            <label class="form-label" for="{{ field.id_for_label }}"><i class="bi bi-calendar-event me-1"></i>{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+          {% else %}
+            <div class="field-float{% if field.errors %} field-float--error{% endif %}">
+              {{ field }}
+              <label for="{{ field.id_for_label }}"><i class="bi bi-people me-1"></i>{{ field.label }}</label>
+            </div>
+            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+          {% endif %}
+          {% if field.errors %}<div class="field-error"><i class="bi bi-exclamation-circle-fill"></i>{{ field.errors|striptags }}</div>{% endif %}
+        </div>
+        {% endfor %}
+
+        <div class="d-flex flex-wrap gap-2 mt-4 pt-3" style="border-top:1px solid var(--border)">
+          <button type="submit" class="btn btn-primary magnetic"><i class="bi bi-check-lg me-1"></i> Save Record</button>
+          <a href="/passengers/" class="btn btn-ghost">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

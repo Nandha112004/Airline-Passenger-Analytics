@@ -1,0 +1,140 @@
+/* ==========================================================================
+   AirAnalytics — Design Tokens
+   Premium futuristic airline analytics design system
+   Single source of truth for colors, gradients, spacing, shadows, motion.
+   ========================================================================== */
+
+:root {
+  /* ---- Brand palette (light theme) ---- */
+  --primary:        #2563EB;
+  --primary-500:    #3B82F6;
+  --primary-300:    #60A5FA;
+  --primary-600:    #1D4ED8;
+  --secondary:      #06B6D4;
+  --secondary-400:  #22D3EE;
+  --accent:         #7C3AED;
+  --accent-500:     #8B5CF6;
+  --accent-300:     #A78BFA;
+
+  --success:        #10B981;
+  --success-text:   #047857;
+  --warning:        #F59E0B;
+  --warning-text:   #B45309;
+  --danger:         #EF4444;
+  --danger-text:    #B91C1C;
+  --info:           #0EA5E9;
+
+  /* ---- Surfaces (light) ---- */
+  --bg:             #F5F8FF;
+  --bg-subtle:      #EAF0FB;
+  --card-bg:        #FFFFFF;
+  --card-glass:     rgba(255, 255, 255, 0.66);
+  --card-hover:     #FFFFFF;
+  --input-bg:       #FFFFFF;
+  --input-border:   #D8E2F2;
+
+  /* ---- Text (light) ---- */
+  --text:           #071224;
+  --text-secondary: #2C3E57;
+  --muted:          #5B6B84;
+
+  /* ---- Lines & glass ---- */
+  --border:         #DDE6F5;
+  --glass-border:   rgba(255, 255, 255, 0.55);
+  --glass-blur:     20px;
+
+  /* ---- Elevation ---- */
+  --shadow-sm:      0 2px 6px rgba(9, 22, 45, 0.06);
+  --shadow:         0 8px 22px rgba(9, 22, 45, 0.08);
+  --shadow-lg:      0 24px 60px rgba(9, 22, 45, 0.14);
+  --shadow-glow:    0 10px 34px rgba(37, 99, 235, 0.30);
+  --shadow-glow-cyan: 0 10px 34px rgba(6, 182, 212, 0.28);
+  --shadow-glow-accent: 0 10px 34px rgba(124, 58, 237, 0.28);
+
+  /* ---- Gradients ---- */
+  --grad-primary:  linear-gradient(135deg, #2563EB 0%, #06B6D4 100%);
+  --grad-accent:   linear-gradient(135deg, #7C3AED 0%, #2563EB 100%);
+  --grad-cyan:     linear-gradient(135deg, #06B6D4 0%, #22D3EE 100%);
+  --grad-sunset:   linear-gradient(135deg, #F59E0B 0%, #EF4444 100%);
+  --grad-mint:     linear-gradient(135deg, #10B981 0%, #06B6D4 100%);
+  --grad-hero:     linear-gradient(135deg, #1D4ED8 0%, #06B6D4 45%, #7C3AED 100%);
+  --grad-text:     linear-gradient(120deg, #2563EB 0%, #06B6D4 40%, #7C3AED 100%);
+
+  /* ---- Geometry ---- */
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r:    18px;
+  --r-lg: 22px;
+  --r-xl: 28px;
+  --r-pill: 999px;
+
+  /* ---- Sidebar metrics ---- */
+  --sidebar-w: 282px;
+  --sidebar-w-collapsed: 80px;
+  --topbar-h: 72px;
+  --sidebar-pad: 16px;
+  /* Single left gutter for the whole rail. This was 12px while
+     --sidebar-pad was 16px, so the logo (16) and the avatar (16) sat 4px
+     right of the nav pills, section label and CTA (12). One value keeps
+     every left edge in the sidebar on the same line. */
+  --sidebar-pad-x: 16px;
+
+  /* ---- Motion ---- */
+  --t-fast: 160ms;
+  --t:      260ms;
+  --t-slow: 420ms;
+  --ease:   cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ---- Type ---- */
+  --font: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+[data-theme="dark"] {
+  --primary:        #3B82F6;
+  --primary-500:    #60A5FA;
+  --primary-300:    #93C5FD;
+  --secondary:      #22D3EE;
+  --secondary-400:  #67E8F9;
+  --accent:         #8B5CF6;
+  --accent-500:     #A78BFA;
+  --accent-300:     #C4B5FD;
+
+  --success:        #10B981;
+  --success-text:   #6EE7B7;
+  --warning:        #F59E0B;
+  --warning-text:   #FCD34D;
+  --danger:         #F87171;
+  --danger-text:    #FCA5A5;
+  --info:           #38BDF8;
+
+  /* ---- Surfaces (midnight) ---- */
+  --bg:             #050816;
+  --bg-subtle:      #0B1220;
+  --card-bg:        #0E1730;
+  --card-hover:     #131E3C;
+  --card-glass:     rgba(16, 26, 52, 0.60);
+  --input-bg:       #0B1428;
+  --input-border:   #1E2D4A;
+
+  /* ---- Text (midnight) ---- */
+  --text:           #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --muted:          #94A3B8;
+
+  --border:         #1C2A4A;
+  --glass-border:   rgba(148, 176, 235, 0.16);
+
+  --shadow-sm:      0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow:         0 10px 28px rgba(0, 0, 0, 0.45);
+  --shadow-lg:      0 28px 70px rgba(0, 0, 0, 0.60);
+  --shadow-glow:    0 10px 38px rgba(59, 130, 246, 0.35);
+  --shadow-glow-cyan: 0 10px 38px rgba(34, 211, 238, 0.30);
+  --shadow-glow-accent: 0 10px 38px rgba(139, 92, 246, 0.32);
+
+  --grad-primary:  linear-gradient(135deg, #3B82F6 0%, #22D3EE 100%);
+  --grad-accent:   linear-gradient(135deg, #8B5CF6 0%, #3B82F6 100%);
+  --grad-cyan:     linear-gradient(135deg, #06B6D4 0%, #22D3EE 100%);
+  --grad-mint:     linear-gradient(135deg, #10B981 0%, #22D3EE 100%);
+}

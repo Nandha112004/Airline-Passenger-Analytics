@@ -1,0 +1,698 @@
+{% extends "public_base.html" %}
+{% block title %}Airline Analytics — Passenger Trend Analysis & Demand Forecasting{% endblock %}
+
+{% block content %}
+
+<!-- ============================ HERO ============================ -->
+<section class="hero">
+  <div class="hero__grid" aria-hidden="true"></div>
+  <div class="container position-relative">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6">
+        <span class="hero__badge reveal">
+          <i class="bi bi-stars" style="color:var(--primary)"></i>
+          Django · Pandas · Scikit-learn Time-Series Forecasting
+        </span>
+
+        <h1 class="hero__title mt-3 reveal" data-delay="1">
+          Airline Passenger<br><span class="grad-text">Trend Analysis</span><br>&amp; Demand Forecasting
+        </h1>
+
+        <p class="hero__sub mt-3 reveal" data-delay="2">
+          Analyze historical passenger data, discover travel patterns, visualize trends, and
+          forecast future airline demand using data analytics.
+        </p>
+
+        <div class="d-flex flex-wrap gap-3 mt-4 reveal" data-delay="3">
+          <a href="{% if user.is_authenticated %}/dashboard/{% else %}/register/{% endif %}" class="btn btn-primary btn-xl magnetic">
+            <i class="bi bi-rocket-takeoff me-2"></i> Explore Dashboard <i class="bi bi-arrow-right btn-ico btn-ico--arrow ms-1"></i>
+          </a>
+          <a href="/trends/" class="btn btn-ghost btn-xl magnetic">
+            <i class="bi bi-bar-chart-line me-2"></i> View Analytics <i class="bi bi-stars btn-ico ms-1"></i>
+          </a>
+        </div>
+
+        <div class="hero__trust mt-4 reveal" data-delay="4">
+          <span class="trust-item"><i class="bi bi-check-circle-fill"></i> 144 months of data</span>
+          <span class="trust-item"><i class="bi bi-check-circle-fill"></i> 3 forecasting models</span>
+          <span class="trust-item"><i class="bi bi-check-circle-fill"></i> MAE · RMSE · MAPE · R²</span>
+        </div>
+
+        <div class="hero-stats mt-5 reveal" data-delay="5">
+          <div class="hero-stat">
+            <div class="hero-stat__val count-up grad-text" data-count="12" data-count-suffix="+">0</div>
+            <div class="hero-stat__lbl">Analysis modules</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat__val count-up grad-text" data-count="6">0</div>
+            <div class="hero-stat__lbl">Chart types</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat__val count-up grad-text" data-count="3">0</div>
+            <div class="hero-stat__lbl">Forecast models</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat__val count-up grad-text" data-count="100" data-count-suffix="%">0</div>
+            <div class="hero-stat__lbl">Responsive</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3D stage -->
+      <div class="col-lg-6">
+        <div class="hero-stage">
+          <div class="plane-scene" aria-hidden="true">
+            <div class="plane-scene__glow"></div>
+            <div class="plane-scene__ring"></div>
+            <div class="plane-scene__ring plane-scene__ring--2"></div>
+            <div class="plane-scene__ring plane-scene__ring--3"></div>
+            <div class="plane-3d">✈</div>
+            <div class="plane-scene__shadow"></div>
+          </div>
+
+          <div class="floating-card floating-card--passengers">
+            <div class="floating-card__label"><i class="bi bi-people-fill me-1"></i> Passengers</div>
+            {% if landing_stats %}
+              <div class="floating-card__value grad-text">{{ landing_stats.total }}</div>
+              <div class="floating-card__delta" style="color:var(--success-text)"><i class="bi bi-arrow-up-short"></i> {{ landing_stats.overall_growth }}% overall growth</div>
+            {% else %}
+              <div class="floating-card__value grad-text">&mdash;</div>
+              <div class="floating-card__delta" style="color:var(--muted)">Add data to populate</div>
+            {% endif %}
+          </div>
+
+          <div class="floating-card floating-card--forecast">
+            <div class="floating-card__label"><i class="bi bi-graph-up me-1"></i> Dataset Range</div>
+            {% if landing_stats %}
+              <div class="floating-card__value grad-text">{{ landing_stats.count }} mo</div>
+              <div class="floating-card__delta" style="color:var(--primary)"><i class="bi bi-calendar-range"></i> Peak in {{ landing_stats.seasonal_peak }}</div>
+            {% else %}
+              <div class="floating-card__value grad-text">&mdash;</div>
+              <div class="floating-card__delta" style="color:var(--muted)">No records yet</div>
+            {% endif %}
+          </div>
+
+          <div class="floating-card floating-card--trend">
+            <div class="floating-card__label"><i class="bi bi-calendar-event me-1"></i> Busiest Month</div>
+            {% if landing_stats %}
+              <div class="floating-card__value grad-text" style="font-size:1.35rem">{{ landing_stats.peak_month }}</div>
+              <div class="floating-card__delta" style="color:var(--secondary)"><i class="bi bi-arrow-up"></i> {{ landing_stats.peak_value }} passengers</div>
+            {% else %}
+              <div class="floating-card__value" style="font-size:1.05rem">No data</div>
+              <div class="floating-card__delta" style="color:var(--muted)">Import a CSV to begin</div>
+            {% endif %}
+          </div>
+
+          <div class="floating-card floating-card--accuracy">
+            <div class="floating-card__label"><i class="bi bi-bar-chart-line me-1"></i> Slowest Month</div>
+            {% if landing_stats %}
+              <div class="floating-card__value grad-text" style="font-size:1.35rem">{{ landing_stats.low_month }}</div>
+              <div class="floating-card__delta" style="color:var(--muted)"><i class="bi bi-arrow-down"></i> {{ landing_stats.low_value }} passengers</div>
+            {% else %}
+              <div class="floating-card__value grad-text">&mdash;</div>
+              <div class="floating-card__delta" style="color:var(--muted)">Seasonality pending</div>
+            {% endif %}
+          </div>
+
+          <div class="mini-chart-card">
+            <div class="d-flex justify-content-between align-items-center">
+              <small class="fw-bold" style="font-size:.78rem"><i class="bi bi-graph-up me-1"></i> Last 12 Months</small>
+              <span class="chip chip--success" style="font-size:.62rem;padding:3px 8px">{% if landing_stats %}Live{% else %}Empty{% endif %}</span>
+            </div>
+            {% if landing_series %}
+            <div class="mini-chart-card__bars" id="heroBars" role="img" aria-label="Bar chart of passengers for the last 12 months">
+              {% for p in landing_series %}<span style="height:{{ p.h }}%" title="{{ p.v }} passengers"></span>{% endfor %}
+            </div>
+            {% else %}
+            <div class="mini-chart-card__bars" id="heroBars" aria-hidden="true">
+              <span style="height:8%"></span><span style="height:8%"></span><span style="height:8%"></span><span style="height:8%"></span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ TRUST MARQUEE ============================ -->
+<section class="section--tight">
+  <div class="container">
+    <div class="d-flex flex-wrap justify-content-center gap-2 reveal">
+      <span class="chip"><i class="bi bi-filetype-py"></i> Python</span>
+      <span class="chip"><i class="bi bi-server"></i> Django</span>
+      <span class="chip"><i class="bi bi-database"></i> SQLite</span>
+      <span class="chip"><i class="bi bi-table"></i> Pandas</span>
+      <span class="chip"><i class="bi bi-cpu"></i> Scikit-learn</span>
+      <span class="chip"><i class="bi bi-bar-chart"></i> Chart.js</span>
+      <span class="chip"><i class="bi bi-palette"></i> Bootstrap 5</span>
+      <span class="chip"><i class="bi bi-shield-lock"></i> Authenticated</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ WHAT THIS SYSTEM HAS ============================ -->
+<section class="section" id="features">
+  <div class="container">
+    <div class="section-head section-head--center text-center mb-5 reveal">
+      <span class="eyebrow"><i class="bi bi-boxes"></i> What this system has</span>
+      <h2 class="section-title mt-3">A complete aviation analytics toolkit</h2>
+      <p class="section-sub mt-3">
+        Ten working modules covering data management, statistical analysis, forecasting,
+        visualization and reporting — all inside one Django application.
+      </p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-4 reveal">
+        <div class="feature-card tilt glare">
+          <div class="feature-card__icon" style="background:var(--grad-primary)"><i class="bi bi-speedometer2"></i></div>
+          <h5>Analytics Dashboard</h5>
+          <p>Total passengers, averages, peak &amp; low months, CAGR, growth rate and next-month forecast — all computed live from your dataset.</p>
+          <div class="feature-card__tags mb-3">
+            <span class="tag">Stat cards</span><span class="tag">Trend chart</span><span class="tag">Heatmap</span>
+          </div>
+          <a class="feature-card__link" href="/dashboard/">Open dashboard <i class="bi bi-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4 reveal" data-delay="1">
+        <div class="feature-card tilt glare">
+          <div class="feature-card__icon" style="background:var(--grad-cyan)"><i class="bi bi-database-fill"></i></div>
+          <h5>Passenger Data Management</h5>
+          <p>Full CRUD: add, edit and delete monthly records with search, year/month filters, min-max range, sorting and pagination.</p>
+          <div class="feature-card__tags mb-3">
+            <span class="tag">CRUD</span><span class="tag">Search</span><span class="tag">Filters</span><span class="tag">Pagination</span>
+          </div>
+          <a class="feature-card__link" href="/passengers/">Manage records <i class="bi bi-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4 reveal" data-delay="2">
+        <div class="feature-card tilt glare">
+          <div class="feature-card__icon" style="background:var(--grad-accent)"><i class="bi bi-cloud-arrow-up"></i></div>
+          <h5>CSV Import &amp; Export</h5>
+          <p>Drag &amp; drop CSV upload with validation, a 20-row preview before committing, duplicate skipping and one-click CSV download.</p>
+          <div class="feature-card__tags mb-3">
+            <span class="tag">Import</span><span class="tag">Preview</span><span class="tag">Export</span>
+          </div>
+          <a class="feature-card__link" href="/passengers/import/">Import data <i class="bi bi-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4 reveal">
+        <div class="feature-card tilt glare">
+          <div class="feature-card__icon" style="background:var(--grad-primary)"><i class="bi bi-graph-up-arrow"></i></div>
+          <h5>Trend Analysis</h5>
+          <p>Monthly seasonality, yearly trends, year-over-year growth, month-over-month growth, peak/low years and an auto-generated insight.</p>
+          <div class="feature-card__tags mb-3">
+            <span class="tag">YoY</span><span class="tag">MoM</span><span class="tag">Seasonal index</span>
+          </div>
+          <a class="feature-card__link" href="/trends/">See trends <i class="bi bi-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4 reveal" data-delay="1">
+        <div class="feature-card tilt glare">
+          <div class="feature-card__icon" style="background:var(--grad-sunset)"><i class="bi bi-magic"></i></div>
+          <h5>Demand Forecasting</h5>
+          <p>Linear Regression, Moving Average and Seasonal models with real accuracy metrics (MAE, RMSE, MAPE, R²) and CSV download.</p>
+          <div class="feature-card__tags mb-3">
+            <span class="tag">Linear</span><span class="tag">Moving Avg</span><span class="tag">Seasonal</span>
+          </div>
+          <a class="feature-card__link" href="/forecast/">Run forecast <i class="bi bi-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4 reveal" data-delay="2">
+        <div class="feature-card tilt glare">
+          <div class="feature-card__icon" style="background:var(--grad-mint)"><i class="bi bi-palette-fill"></i></div>
+          <h5>Data Visualizations</h5>
+          <p>Line, area, bar, seasonal and growth charts plus an interactive year × month heatmap that re-colours with your theme.</p>
+          <div class="feature-card__tags mb-3">
+            <span class="tag">Heatmap</span><span class="tag">Gradients</span><span class="tag">Tooltips</span>
+          </div>
+          <a class="feature-card__link" href="/visualizations/">Visualize data <i class="bi bi-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4 reveal">
+        <div class="feature-card tilt glare">
+          <div class="feature-card__icon" style="background:var(--grad-accent)"><i class="bi bi-file-earmark-text-fill"></i></div>
+          <h5>Reports</h5>
+          <p>A printable executive summary: dataset totals, yearly &amp; monthly breakdown tables, forecast summary and an insight panel.</p>
+          <div class="feature-card__tags mb-3">
+            <span class="tag">Print</span><span class="tag">Tables</span><span class="tag">Insights</span>
+          </div>
+          <a class="feature-card__link" href="/reports/">Read report <i class="bi bi-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4 reveal" data-delay="1">
+        <div class="feature-card tilt glare">
+          <div class="feature-card__icon" style="background:var(--grad-primary)"><i class="bi bi-shield-lock-fill"></i></div>
+          <h5>Authentication</h5>
+          <p>Register, log in and log out with Django's built-in secure session auth, CSRF protection and password validators.</p>
+          <div class="feature-card__tags mb-3">
+            <span class="tag">Login</span><span class="tag">Register</span><span class="tag">Session</span>
+          </div>
+          <a class="feature-card__link" href="/login/">Sign in <i class="bi bi-arrow-right"></i></a>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4 reveal" data-delay="2">
+        <div class="feature-card tilt glare">
+          <div class="feature-card__icon" style="background:var(--grad-cyan)"><i class="bi bi-moon-stars-fill"></i></div>
+          <h5>Theme &amp; Settings</h5>
+          <p>Midnight dark and soft light themes, saved in your browser. Every chart re-renders to stay readable in both modes.</p>
+          <div class="feature-card__tags mb-3">
+            <span class="tag">Dark</span><span class="tag">Light</span><span class="tag">Persisted</span>
+          </div>
+          <a class="feature-card__link" href="/settings/">Open settings <i class="bi bi-arrow-right"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ INTERACTIVE GLOBE ============================ -->
+<section class="section">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-5 reveal">
+        <span class="eyebrow"><i class="bi bi-globe2"></i> Global demand</span>
+        <h2 class="section-title mt-3">Airline demand, connected worldwide</h2>
+        <p class="section-sub mt-3">
+          The interactive globe visualises how a passenger dataset becomes a global picture:
+          glowing hubs, animated flight paths and live data points that respond to your mouse.
+        </p>
+        <ul class="list-unstyled d-flex flex-column gap-3 mt-4" style="color:var(--text-secondary)">
+          <li class="d-flex gap-3 align-items-start">
+            <span class="pill-icon pill-icon--sm"><i class="bi bi-hand-index"></i></span>
+            <span><strong>Drag to rotate</strong><br><small class="text-muted">Spin the globe and tilt it up or down.</small></span>
+          </li>
+          <li class="d-flex gap-3 align-items-start">
+            <span class="pill-icon pill-icon--sm" style="background:var(--grad-cyan)"><i class="bi bi-cursor"></i></span>
+            <span><strong>Hover the hubs</strong><br><small class="text-muted">Airport labels appear as you move across the sphere.</small></span>
+          </li>
+          <li class="d-flex gap-3 align-items-start">
+            <span class="pill-icon pill-icon--sm" style="background:var(--grad-mint)"><i class="bi bi-lightning-charge"></i></span>
+            <span><strong>Animated routes</strong><br><small class="text-muted">Dots travel along each arc to represent moving flights.</small></span>
+          </li>
+        </ul>
+      </div>
+      <div class="col-lg-7">
+        <div class="glass-card p-3 p-lg-4 reveal" data-delay="1">
+          <div class="globe-wrap">
+            <canvas id="globe" width="480" height="480" role="img" aria-label="Rotating globe showing airline hubs and animated flight routes"></canvas>
+            <span class="globe-hint"><i class="bi bi-hand-index-thumb"></i> Drag to rotate · hover a hub</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ HOW TO USE ============================ -->
+<section class="section" id="how-to-use">
+  <div class="container">
+    <div class="section-head section-head--center text-center mb-5 reveal">
+      <span class="eyebrow"><i class="bi bi-signpost-split"></i> How to use this website</span>
+      <h2 class="section-title mt-3">From login to forecast in 7 steps</h2>
+      <p class="section-sub mt-3">
+        Follow these steps to load data, explore trends, run a forecast and export the results.
+        Every step below links straight to the page you need.
+      </p>
+    </div>
+
+    <div class="row g-5">
+      <div class="col-lg-7">
+        <div class="steps">
+          <div class="step reveal">
+            <div class="step__badge">1</div>
+            <div class="step__body">
+              <h5><i class="bi bi-person-plus me-2" style="color:var(--primary)"></i>Create an account</h5>
+              <p>
+                Open <a href="/register/" style="color:var(--primary);font-weight:700">Register</a> and fill in username,
+                email and password. Django validates the password strength, then signs you in automatically
+                and takes you to the dashboard.
+              </p>
+              <div class="step__tips">
+                <span class="chip chip--primary"><i class="bi bi-check2"></i> Password validators</span>
+                <span class="chip"><i class="bi bi-shield-check"></i> CSRF protected</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="step reveal" data-delay="1">
+            <div class="step__badge">2</div>
+            <div class="step__body">
+              <h5><i class="bi bi-box-arrow-in-right me-2" style="color:var(--primary)"></i>Log in to your account</h5>
+              <p>
+                Already registered? Use <a href="/login/" style="color:var(--primary);font-weight:700">Log in</a>.
+                Sessions keep you signed in, and every data page is protected — visiting a protected URL
+                without a session redirects you to the login page automatically.
+              </p>
+              <div class="step__tips">
+                <span class="chip chip--success"><i class="bi bi-lock"></i> Session based</span>
+                <span class="chip"><i class="bi bi-box-arrow-right"></i> Logout from the top bar</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="step reveal" data-delay="2">
+            <div class="step__badge">3</div>
+            <div class="step__body">
+              <h5><i class="bi bi-cloud-arrow-up me-2" style="color:var(--primary)"></i>Load your passenger data</h5>
+              <p>
+                Go to <a href="/passengers/import/" style="color:var(--primary);font-weight:700">Import CSV</a>, drag your file
+                into the drop zone and press <strong>Preview</strong> to validate the first 20 rows. When it looks right,
+                press <strong>Import</strong>. CSV format: <code>Month,Passengers</code> (e.g. <code>1949-01,112</code>).
+                A sample dataset of 144 months is already loaded.
+              </p>
+              <div class="step__tips">
+                <span class="chip chip--warning"><i class="bi bi-exclamation-triangle"></i> Duplicates skipped</span>
+                <span class="chip"><i class="bi bi-eye"></i> Preview first</span>
+                <span class="chip"><i class="bi bi-file-earmark-spreadsheet"></i> Max 5&nbsp;MB</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="step reveal" data-delay="3">
+            <div class="step__badge">4</div>
+            <div class="step__body">
+              <h5><i class="bi bi-speedometer2 me-2" style="color:var(--primary)"></i>Read the dashboard</h5>
+              <p>
+                The <a href="/dashboard/" style="color:var(--primary);font-weight:700">Dashboard</a> shows the headline numbers:
+                total passengers, monthly average, peak &amp; low months, growth rate and the predicted value for the
+                next month. Below them: trend line, yearly bars, seasonal averages, YoY growth and the heatmap.
+              </p>
+              <div class="step__tips">
+                <span class="chip chip--primary"><i class="bi bi-graph-up"></i> Live charts</span>
+                <span class="chip"><i class="bi bi-grid-3x3"></i> Heatmap</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="step reveal" data-delay="4">
+            <div class="step__badge">5</div>
+            <div class="step__body">
+              <h5><i class="bi bi-graph-up-arrow me-2" style="color:var(--primary)"></i>Explore trends</h5>
+              <p>
+                Open <a href="/trends/" style="color:var(--primary);font-weight:700">Trend Analysis</a> for monthly seasonality,
+                yearly totals, MoM &amp; YoY growth, peak/low years and a full timeline. Use
+                <a href="/visualizations/" style="color:var(--primary);font-weight:700">Visualizations</a> for the expanded
+                chart studio, including the interactive heatmap and a forecast overlay.
+              </p>
+              <div class="step__tips">
+                <span class="chip"><i class="bi bi-calendar3"></i> Seasonal index</span>
+                <span class="chip"><i class="bi bi-percent"></i> MoM / YoY</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="step reveal" data-delay="5">
+            <div class="step__badge">6</div>
+            <div class="step__body">
+              <h5><i class="bi bi-magic me-2" style="color:var(--primary)"></i>Generate a forecast</h5>
+              <p>
+                On <a href="/forecast/" style="color:var(--primary);font-weight:700">Forecasting</a> pick a model
+                (<strong>Linear</strong>, <strong>Moving Average</strong> or <strong>Seasonal</strong>), set how many months
+                to project and press <strong>Generate Forecast</strong>. You get the predicted table, the historical-vs-forecast
+                chart and the accuracy metrics. Moving Average also exposes a window setting.
+              </p>
+              <div class="step__tips">
+                <span class="chip chip--accent"><i class="bi bi-cpu"></i> Real model output</span>
+                <span class="chip"><i class="bi bi-download"></i> Download CSV</span>
+                <span class="chip"><i class="bi bi-braces"></i> JSON API</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="step reveal" data-delay="5">
+            <div class="step__badge">7</div>
+            <div class="step__body">
+              <h5><i class="bi bi-file-earmark-arrow-down me-2" style="color:var(--primary)"></i>Export &amp; report</h5>
+              <p>
+                Use <a href="/reports/" style="color:var(--primary);font-weight:700">Reports</a> for a printable executive summary,
+                or download the raw data with <strong>Export CSV</strong> on the
+                <a href="/passengers/" style="color:var(--primary);font-weight:700">Passenger Data</a> page — the export respects
+                whatever filters you have applied.
+              </p>
+              <div class="step__tips">
+                <span class="chip"><i class="bi bi-printer"></i> Print / PDF</span>
+                <span class="chip"><i class="bi bi-download"></i> CSV export</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-5">
+        <div class="sticky-lg-top" style="top:96px">
+          <h4 class="section-title mb-1 reveal">Every page at a glance</h4>
+          <p class="section-sub mb-4 reveal" data-delay="1">What each module does and where to find it.</p>
+
+          <a class="module-card d-block text-decoration-none reveal" data-delay="1" href="/passengers/">
+            <div class="module-card__head">
+              <span class="pill-icon pill-icon--sm" style="background:var(--grad-primary)"><i class="bi bi-people-fill"></i></span>
+              <h6>Passenger Data</h6>
+              <span class="module-card__route ms-auto">/passengers/</span>
+            </div>
+            <p>Search, filter, sort and paginate records. Add or edit with a form, delete with a confirmation dialog.</p>
+          </a>
+
+          <a class="module-card d-block text-decoration-none reveal" data-delay="2" href="/trends/">
+            <div class="module-card__head">
+              <span class="pill-icon pill-icon--sm" style="background:var(--grad-cyan)"><i class="bi bi-graph-up-arrow"></i></span>
+              <h6>Trend Analysis</h6>
+              <span class="module-card__route ms-auto">/trends/</span>
+            </div>
+            <p>Seasonality, yearly trends, MoM &amp; YoY growth, peak and low years, plus a generated insight.</p>
+          </a>
+
+          <a class="module-card d-block text-decoration-none reveal" data-delay="3" href="/forecast/">
+            <div class="module-card__head">
+              <span class="pill-icon pill-icon--sm" style="background:var(--grad-sunset)"><i class="bi bi-magic"></i></span>
+              <h6>Forecasting</h6>
+              <span class="module-card__route ms-auto">/forecast/</span>
+            </div>
+            <p>Choose a model and horizon, run the forecast, inspect MAE / RMSE / MAPE / R² and download the result.</p>
+          </a>
+
+          <a class="module-card d-block text-decoration-none reveal" data-delay="4" href="/visualizations/">
+            <div class="module-card__head">
+              <span class="pill-icon pill-icon--sm" style="background:var(--grad-mint)"><i class="bi bi-palette-fill"></i></span>
+              <h6>Visualizations</h6>
+              <span class="module-card__route ms-auto">/visualizations/</span>
+            </div>
+            <p>Six chart types on gradient glass panels with tooltips, theme-aware colours and a hoverable heatmap.</p>
+          </a>
+
+          <a class="module-card d-block text-decoration-none reveal" data-delay="5" href="/reports/">
+            <div class="module-card__head">
+              <span class="pill-icon pill-icon--sm" style="background:var(--grad-accent)"><i class="bi bi-file-earmark-text-fill"></i></span>
+              <h6>Reports</h6>
+              <span class="module-card__route ms-auto">/reports/</span>
+            </div>
+            <p>Printable summary with totals, yearly and monthly tables, forecast summary and seasonal insight.</p>
+          </a>
+
+          <a class="module-card d-block text-decoration-none reveal" data-delay="5" href="/settings/">
+            <div class="module-card__head">
+              <span class="pill-icon pill-icon--sm" style="background:var(--grad-primary)"><i class="bi bi-gear-fill"></i></span>
+              <h6>Settings</h6>
+              <span class="module-card__route ms-auto">/settings/</span>
+            </div>
+            <p>Profile details, theme toggle and system information for the running stack.</p>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ TECHNICAL CAPABILITIES ============================ -->
+<section class="section">
+  <div class="container">
+    <div class="section-head section-head--center text-center mb-5 reveal">
+      <span class="eyebrow"><i class="bi bi-cpu"></i> Under the hood</span>
+      <h2 class="section-title mt-3">Real analysis, not fake numbers</h2>
+      <p class="section-sub mt-3">
+        Every figure on this site is calculated by Python from the stored dataset — there are no
+        hard-coded statistics anywhere in the templates.
+      </p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-4 reveal">
+        <div class="capability">
+          <span class="capability__num">01</span>
+          <div>
+            <h6>Descriptive statistics</h6>
+            <p>Total, mean, max, min, count, peak and low records per year, computed with Pandas groupby.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 reveal" data-delay="1">
+        <div class="capability">
+          <span class="capability__num">02</span>
+          <div>
+            <h6>Seasonal index</h6>
+            <p>Each month's average divided by the overall average, expressed as a percentage index.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 reveal" data-delay="2">
+        <div class="capability">
+          <span class="capability__num">03</span>
+          <div>
+            <h6>MoM &amp; YoY growth</h6>
+            <p>Month-over-month percentage change and year-over-year totals, with a base year for the first period.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 reveal">
+        <div class="capability">
+          <span class="capability__num">04</span>
+          <div>
+            <h6>CAGR</h6>
+            <p>Compound annual growth rate derived from the first and last records of the dataset.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 reveal" data-delay="1">
+        <div class="capability">
+          <span class="capability__num">05</span>
+          <div>
+            <h6>Time-series models</h6>
+            <p>Linear Regression, Moving Average and Seasonal Exponential Smoothing, evaluated on a 20% test split.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 reveal" data-delay="2">
+        <div class="capability">
+          <span class="capability__num">06</span>
+          <div>
+            <h6>Accuracy metrics</h6>
+            <p>MAE, RMSE, MAPE and R² per model so you can compare which approach fits your data best.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ TECH STACK ============================ -->
+<section class="section section--tight">
+  <div class="container">
+    <div class="section-head section-head--center text-center mb-4 reveal">
+      <h2 class="section-title">Built with</h2>
+    </div>
+    <div class="d-flex flex-wrap justify-content-center gap-2 reveal" data-delay="1">
+      <span class="tech-chip"><i class="bi bi-filetype-py" style="color:#3776AB"></i> Python</span>
+      <span class="tech-chip"><i class="bi bi-server" style="color:#0C4B33"></i> Django</span>
+      <span class="tech-chip"><i class="bi bi-database" style="color:#003B57"></i> SQLite</span>
+      <span class="tech-chip"><i class="bi bi-table" style="color:#150458"></i> Pandas</span>
+      <span class="tech-chip"><i class="bi bi-calculator" style="color:#013243"></i> NumPy</span>
+      <span class="tech-chip"><i class="bi bi-cpu" style="color:#F7931E"></i> Scikit-learn</span>
+      <span class="tech-chip"><i class="bi bi-graph-up" style="color:#3C3C3C"></i> Statsmodels</span>
+      <span class="tech-chip"><i class="bi bi-bar-chart-line" style="color:#FF6384"></i> Chart.js</span>
+      <span class="tech-chip"><i class="bi bi-bootstrap" style="color:#7952B3"></i> Bootstrap 5</span>
+      <span class="tech-chip"><i class="bi bi-bootstrap-fill" style="color:#5C5C5C"></i> Bootstrap Icons</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ FAQ ============================ -->
+<section class="section">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-9">
+        <div class="section-head section-head--center text-center mb-4 reveal">
+          <span class="eyebrow"><i class="bi bi-question-circle"></i> FAQ</span>
+          <h2 class="section-title mt-3">Questions you may have</h2>
+        </div>
+
+        <div class="accordion faq-accordion reveal" data-delay="1" id="faqAcc">
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                <span class="faq-q"><i class="bi bi-shield-lock"></i> Do I need an account to see the data?</span>
+              </button>
+            </h2>
+            <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAcc">
+              <div class="accordion-body">Yes. Every data page — dashboard, passengers, trends, forecast, visualizations, reports and settings — requires a signed-in session. Visitors without one are redirected to the login page, and a registered username plus password unlocks the whole application.</div>
+            </div>
+          </div>
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                <span class="faq-q"><i class="bi bi-cloud-arrow-up"></i> What CSV format should I import?</span>
+              </button>
+            </h2>
+            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAcc">
+              <div class="accordion-body">Two columns: <code>Month</code> and <code>Passengers</code>. Accepted date formats are <code>YYYY-MM</code>, <code>YYYY-MM-DD</code> and <code>MM/YYYY</code>. Passenger values must be numeric and zero or greater, and each month can only appear once — duplicates are skipped rather than overwritten. You can press Preview to inspect the first 20 rows before committing.</div>
+            </div>
+          </div>
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                <span class="faq-q"><i class="bi bi-magic"></i> Which forecasting model should I pick?</span>
+              </button>
+            </h2>
+            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAcc">
+              <div class="accordion-body">Linear Regression suits data with a steady upward trend. Moving Average smooths out noise and reacts slowly, and works well when you want a stable baseline. Seasonal Exponential Smoothing captures the yearly cycle, so it is usually the strongest choice for airline data. The model comparison table on the Forecasting page scores all three with MAE, RMSE, MAPE and R² so you can decide from evidence rather than guesswork.</div>
+            </div>
+          </div>
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                <span class="faq-q"><i class="bi bi-moon-stars"></i> How does dark mode work?</span>
+              </button>
+            </h2>
+            <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAcc">
+              <div class="accordion-body">Use the moon or sun button in the navbar. The choice is written to your browser's local storage and is restored on your next visit, and the first load follows your operating system preference. Charts re-render on theme change so grid lines, labels and tooltips stay readable in both the midnight and light themes.</div>
+            </div>
+          </div>
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                <span class="faq-q"><i class="bi bi-phone"></i> Does it work on a phone?</span>
+              </button>
+            </h2>
+            <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAcc">
+              <div class="accordion-body">Yes. The layout is built mobile-first, so tables scroll horizontally, the sidebar becomes a slide-out drawer with an overlay, stat cards stack into a two-column grid, and every chart resizes to the viewport. Animations also respect your system's reduced-motion setting.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ CTA ============================ -->
+<section class="section">
+  <div class="container">
+    <div class="cta-band reveal">
+      <span class="cta-band__deco cta-band__deco--1" aria-hidden="true">✈</span>
+      <span class="cta-band__deco cta-band__deco--2" aria-hidden="true">✈</span>
+      <h2 class="section-title mb-3" style="color:#fff">Ready to forecast airline demand?</h2>
+      <p class="mb-4" style="color:rgba(255,255,255,.9);max-width:620px;margin-left:auto;margin-right:auto">
+        Create an account, load your passenger dataset and turn historical travel data into
+        a defensible demand forecast — in minutes, not spreadsheets.
+      </p>
+      <div class="d-flex flex-wrap gap-3 justify-content-center">
+        {% if user.is_authenticated %}
+          <a href="/dashboard/" class="btn btn-light btn-xl magnetic"><i class="bi bi-speedometer2 me-2"></i> Go to Dashboard</a>
+          <a href="/forecast/" class="btn btn-outline-light btn-xl magnetic"><i class="bi bi-magic me-2"></i> Run a Forecast</a>
+        {% else %}
+          <a href="/register/" class="btn btn-light btn-xl magnetic"><i class="bi bi-rocket-takeoff me-2"></i> Create Free Account <i class="bi bi-arrow-right btn-ico btn-ico--arrow ms-1"></i></a>
+          <a href="/login/" class="btn btn-outline-light btn-xl magnetic"><i class="bi bi-box-arrow-in-right me-2"></i> Log in</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

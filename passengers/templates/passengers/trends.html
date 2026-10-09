@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% block title %}Trend Analysis - AirAnalytics{% endblock %}
+{% block page_title %}Trend Analysis{% endblock %}
+{% block content %}
+{% load formatting %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div>
+    <h4 class="fw-bold mb-1" style="letter-spacing:-.02em">Travel Trend Analysis</h4>
+    <p class="small mb-0" style="color:var(--muted)">Monthly, yearly, seasonal & growth insights — <span style="color:var(--primary);font-weight:700">auto-generated</span> from your dataset (no hard-coded text)</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="/visualizations/" class="btn btn-outline-primary btn-sm"><i class="bi bi-palette me-1"></i> Visualizations</a>
+    <a href="/reports/" class="btn btn-primary btn-sm"><i class="bi bi-file-text me-1"></i> Reports</a>
+  </div>
+</div>
+
+<!-- insight banner -->
+<div class="card-modern p-3 p-lg-4 mb-4" style="background:var(--gradient-primary);color:#fff;border:none;overflow:hidden;position:relative">
+  <div class="position-absolute" style="right:-20px;top:-20px;opacity:.12;font-size:5rem">📈</div>
+  <div class="d-flex gap-3 align-items-start position-relative">
+    <div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width:42px;height:42px;background:rgba(255,255,255,.18);backdrop-filter:blur(8px);border-radius:12px"><i class="bi bi-lightbulb-fill"></i></div>
+    <div>
+      <div class="fw-bold small mb-1" style="letter-spacing:.04em;opacity:.9">DYNAMIC INSIGHT</div>
+      <div class="small" style="opacity:.96;line-height:1.5">{{ seasonal.insight }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4 stagger">
+  <div class="col-lg-8">
+    <div class="card-modern p-3 p-lg-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0 d-flex align-items-center gap-2"><span class="d-flex align-items-center justify-content-center" style="width:32px;height:32px;background:var(--gradient-primary);color:#fff;border-radius:10px;font-size:.9rem"><i class="bi bi-bar-chart-fill"></i></span> Monthly Average — Seasonality</h6>
+        <span class="badge" style="background:var(--bg-subtle);color:var(--muted);border:1px solid var(--border)">12 MONTHS</span>
+      </div>
+      <div style="height:280px;position:relative"><canvas id="monthlyTrend"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card-modern p-3 h-100">
+      <h6 class="fw-bold mb-3 d-flex align-items-center gap-2"><i class="bi bi-trophy-fill" style="color:var(--warning)"></i> Peak & Low Demand</h6>
+      {% if peak_low.highest %}
+      <div class="p-3 rounded-3 mb-3 position-relative overflow-hidden" style="background:linear-gradient(135deg, rgba(34,197,94,.10), rgba(34,197,94,.03));border:1px solid rgba(34,197,94,.18)">
+        <div class="position-absolute" style="right:12px;top:12px;opacity:.12;font-size:1.8rem">🏆</div>
+        <small style="color:var(--muted);font-weight:700;font-size:.68rem;letter-spacing:.06em">HIGHEST DEMAND YEAR</small>
+        <div class="h5 fw-bold mb-1" style="color:var(--text)">{{ peak_low.highest.year }} • {{ peak_low.highest.total|floatformat:0 }}</div>
+        <small style="color:var(--muted)">Peak month <strong style="color:var(--success)">{{ peak_low.highest.peak_month }}</strong> ({{ peak_low.highest.peak_value }})</small>
+        <div class="mt-2"><span class="badge bg-success" style="border-radius:999px">Top Year</span></div>
+      </div>
+      {% endif %}
+      {% if peak_low.lowest %}
+      <div class="p-3 rounded-3 mb-3" style="background:linear-gradient(135deg, rgba(239,68,68,.08), rgba(239,68,68,.02));border:1px solid rgba(239,68,68,.18)">
+        <small style="color:var(--muted);font-weight:700;font-size:.68rem;letter-spacing:.06em">LOWEST DEMAND YEAR</small>
+        <div class="h5 fw-bold mb-1" style="color:var(--text)">{{ peak_low.lowest.year }} • {{ peak_low.lowest.total|floatformat:0 }}</div>
+        <small style="color:var(--muted)">Low month <strong style="color:var(--danger)">{{ peak_low.lowest.low_month }}</strong> ({{ peak_low.lowest.low_value }})</small>
+      </div>
+      {% endif %}
+      <div class="p-3 rounded-3" style="background:var(--bg-subtle);border:1px solid var(--border)">
+        <div class="d-flex align-items-center gap-2 mb-2"><i class="bi bi-stars" style="color:var(--primary)"></i><strong style="font-size:.85rem;color:var(--text)">Quick Stats</strong></div>
+        <div class="row g-2 text-center">
+          <div class="col-6"><div class="p-2 rounded-3" style="background:var(--card-bg);border:1px solid var(--border)"><div class="fw-bold" style="color:var(--primary)">{{ yearly|length }}</div><small style="color:var(--muted);font-size:.7rem">Years</small></div></div>
+          <div class="col-6"><div class="p-2 rounded-3" style="background:var(--card-bg);border:1px solid var(--border)"><div class="fw-bold" style="color:var(--accent)">{{ monthly|length }}</div><small style="color:var(--muted);font-size:.7rem">Months avg</small></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-6">
+    <div class="card-modern p-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0 d-flex align-items-center gap-2"><i class="bi bi-calendar3" style="color:var(--accent)"></i> Seasonal Details</h6>
+        <span class="badge" style="background:rgba(20,184,166,.10);color:var(--accent);border:1px solid rgba(20,184,166,.18)">Seasonal Index</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-modern table-sm mb-0">
+          <thead><tr><th>Month</th><th>Avg</th><th>Max</th><th>Min</th><th>Index</th></tr></thead>
+          <tbody>
+            {% for m in monthly %}
+            <tr><td class="fw-bold" style="color:var(--text)">{{ m.month_name }}</td><td style="font-weight:600">{{ m.avg }}</td><td>{{ m.max }}</td><td>{{ m.min }}</td>
+              <td><span class="badge" style="border-radius:999px;font-weight:700;{% if m.seasonal_index > 105 %}background:rgba(34,197,94,.12);color:var(--success);border:1px solid rgba(34,197,94,.2){% elif m.seasonal_index < 95 %}background:rgba(245,158,11,.12);color:var(--warning);border:1px solid rgba(245,158,11,.2){% else %}background:var(--bg-subtle);color:var(--muted);border:1px solid var(--border){% endif %}">{{ m.seasonal_index }}%</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card-modern p-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0 d-flex align-items-center gap-2"><i class="bi bi-graph-up" style="color:var(--secondary)"></i> Yearly Trends</h6>
+        <span class="badge bg-primary" style="border-radius:999px">{{ yearly|length }} years</span>
+      </div>
+      <div style="height:200px"><canvas id="yearlyTrend"></canvas></div>
+      <div class="table-responsive mt-3" style="max-height:240px">
+        <table class="table table-modern table-sm mb-0">
+          <thead><tr><th>Year</th><th>Total</th><th>Avg</th><th>YoY</th></tr></thead>
+          <tbody>
+            {% for y in yearly %}
+            <tr><td class="fw-bold">{{ y.year }}</td><td>{{ y.total|thousands }}</td><td>{{ y.avg|floatformat:1 }}</td>
+              <td>{% if y.yoy_growth %}<span class="badge" style="border-radius:999px;background:{% if y.yoy_growth > 0 %}rgba(34,197,94,.12);color:var(--success){% else %}rgba(239,68,68,.12);color:var(--danger){% endif %};border:1px solid currentColor">{{ y.yoy_growth|floatformat:1 }}%</span>{% else %}<span class="badge" style="background:var(--bg-subtle);color:var(--muted);border:1px solid var(--border);border-radius:999px">— base</span>{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-6">
+    <div class="card-modern p-3 p-lg-4">
+      <h6 class="fw-bold mb-3 d-flex align-items-center gap-2"><span class="d-flex align-items-center justify-content-center" style="width:28px;height:28px;background:linear-gradient(135deg,#14B8A6,#0EA5E9);color:#fff;border-radius:10px"><i class="bi bi-activity"></i></span> Growth Analysis</h6>
+      <div class="row g-2 text-center mb-3">
+        <div class="col-4"><div class="p-3 rounded-3 position-relative overflow-hidden" style="background:linear-gradient(135deg, rgba(37,99,235,.08), rgba(37,99,235,.02));border:1px solid rgba(37,99,235,.14)"><small style="color:var(--muted);font-weight:700;font-size:.68rem;letter-spacing:.05em">OVERALL</small><div class="fw-bold" style="font-size:1.1rem;color:var(--primary)">{{ growth.overall_growth }}%</div></div></div>
+        <div class="col-4"><div class="p-3 rounded-3" style="background:linear-gradient(135deg, rgba(14,165,233,.08), rgba(14,165,233,.02));border:1px solid rgba(14,165,233,.14)"><small style="color:var(--muted);font-weight:700;font-size:.68rem;letter-spacing:.05em">CAGR</small><div class="fw-bold" style="font-size:1.1rem;color:var(--secondary)">{{ growth.cagr }}%</div></div></div>
+        <div class="col-4"><div class="p-3 rounded-3" style="background:linear-gradient(135deg, rgba(20,184,166,.08), rgba(20,184,166,.02));border:1px solid rgba(20,184,166,.14)"><small style="color:var(--muted);font-weight:700;font-size:.68rem;letter-spacing:.05em">MoM AVG</small><div class="fw-bold" style="font-size:1.1rem;color:var(--accent)">{{ growth.mom_avg }}%</div></div></div>
+      </div>
+      <div style="height:240px"><canvas id="momChart"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card-modern p-3 p-lg-4">
+      <h6 class="fw-bold mb-3 d-flex align-items-center gap-2"><span class="d-flex align-items-center justify-content-center" style="width:28px;height:28px;background:linear-gradient(135deg,#F59E0B,#EF4444);color:#fff;border-radius:10px"><i class="bi bi-bar-chart-line-fill"></i></span> Year-over-Year Growth</h6>
+      <div style="height:320px"><canvas id="yoyChart"></canvas></div>
+      <small style="color:var(--muted)">Green = growth • Red = decline • Grey = base year</small>
+    </div>
+  </div>
+</div>
+
+<div class="card-modern p-3 p-lg-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h6 class="fw-bold mb-0 d-flex align-items-center gap-2"><i class="bi bi-compass" style="color:var(--primary)"></i> Full Timeline</h6>
+    <span class="badge" style="background:var(--bg-subtle);border:1px solid var(--border);color:var(--muted)">{{ trend_data_json|length }} points</span>
+  </div>
+  <div class="chart-shell" style="height:260px"><canvas id="fullTrend" role="img" aria-label="Full monthly passenger timeline"></canvas></div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script id="aaTrendsData" type="application/json">
+{
+  "monthly": {{ monthly_json|safe }},
+  "yearly": {{ yearly_json|safe }},
+  "growth": {{ growth_json|safe }},
+  "trend": {{ trend_data_json|safe }}
+}
+</script>
+<script>
+(function () {
+  const D = JSON.parse(document.getElementById('aaTrendsData').textContent);
+  if (!window.AACharts || !window.AACharts.ready) return;
+
+  const pct = function (v) { return v + '%'; };
+
+  function seasonalColor(m) {
+    var s = m.seasonal_index;
+    return s > 105 ? '#10B981' : s < 95 ? '#F59E0B' : '#2563EB';
+  }
+
+  function build() {
+    if (D.monthly && D.monthly.length) {
+      AACharts.create({
+        id: 'monthlyTrend', type: 'bar', shape: 'cartesian',
+        labels: D.monthly.map(function (m) { return m.short_name; }),
+        datasets: [{
+          label: 'Avg Passengers',
+          data: D.monthly.map(function (m) { return +Number(m.avg).toFixed(1); }),
+          backgroundColor: D.monthly.map(seasonalColor),
+          perPoint: false
+        }],
+        tooltipCallbacks: {
+          afterLabel: function (c) {
+            var m = D.monthly[c.dataIndex];
+            return 'Seasonal index: ' + Number(m.seasonal_index).toFixed(1) +
+                   '  •  Max ' + m.max + '  •  Min ' + m.min;
+          }
+        }
+      });
+    }
+
+    if (D.yearly && D.yearly.length) {
+      AACharts.create({
+        id: 'yearlyTrend', type: 'area', shape: 'cartesian',
+        labels: D.yearly.map(function (y) { return y.year; }),
+        datasets: [{ label: 'Total', data: D.yearly.map(function (y) { return y.total; }) }]
+      });
+
+      const yoy = D.yearly.map(function (y) {
+        return y.yoy_growth === null || y.yoy_growth === undefined ? null : +Number(y.yoy_growth).toFixed(1);
+      });
+      AACharts.create({
+        id: 'yoyChart', type: 'bar', shape: 'cartesian',
+        labels: D.yearly.map(function (y) { return y.year; }),
+        datasets: [{
+          label: 'YoY %', data: yoy,
+          backgroundColor: yoy.map(function (v) {
+            return v === null ? 'rgba(148,163,184,.35)' : v > 0 ? '#10B981' : '#EF4444';
+          }),
+          perPoint: false
+        }],
+        yFormat: pct,
+        tooltipCallbacks: {
+          label: function (c) { return c.parsed.y === null ? 'Base year' : c.parsed.y.toFixed(1) + '%'; }
+        }
+      });
+    }
+
+    if (D.growth && D.growth.mom && D.growth.mom.length) {
+      AACharts.create({
+        id: 'momChart', type: 'line', shape: 'cartesian',
+        labels: D.growth.mom.map(function (m) { return m.month_str; }),
+        datasets: [{ label: 'MoM %', data: D.growth.mom.map(function (m) { return m.mom; }) }],
+        yFormat: pct,
+        maxTicks: 6
+      });
+    }
+
+    if (D.trend && D.trend.length) {
+      AACharts.create({
+        id: 'fullTrend', type: 'area', shape: 'cartesian',
+        labels: D.trend.map(function (d) { return d.month_str; }),
+        datasets: [{ label: 'Passengers', data: D.trend.map(function (d) { return d.passengers; }) }],
+        maxTicks: 12
+      });
+    }
+  }
+
+  window.AA_ready(function () {
+    AACharts.init();
+    build();
+  });
+})();
+</script>
+{% endblock %}

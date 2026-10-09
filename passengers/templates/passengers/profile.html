@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Profile - AirAnalytics{% endblock %}
+{% block page_title %}Profile{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div>
+    <span class="eyebrow"><i class="bi bi-person-badge"></i> Account</span>
+    <h2 class="section-title mt-2 mb-1">Your Profile</h2>
+    <p class="text-muted mb-0">Account details and your dataset contribution at a glance.</p>
+  </div>
+  <a href="/settings/" class="btn btn-ghost btn-sm"><i class="bi bi-gear me-1"></i> Preferences</a>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card-modern hover-lift p-4 text-center">
+      <div class="avatar-circle mx-auto mb-3" style="width:88px;height:88px;font-size:2.1rem">{{ initial }}</div>
+      <h3 class="section-title h5 mb-1">{{ profile.username }}</h3>
+      <p class="small text-muted mb-3">{{ profile.email|default:"No email address on file" }}</p>
+      <div class="d-flex flex-wrap gap-2 justify-content-center">
+        <span class="chip chip--primary"><i class="bi bi-shield-check"></i> Staff</span>
+        <span class="chip"><i class="bi bi-calendar-check"></i> Joined {{ profile.date_joined|date:"M Y" }}</span>
+      </div>
+      {% if last_login %}<p class="small text-muted mt-3 mb-0"><i class="bi bi-clock-history me-1"></i>Last sign-in {{ last_login|date:"M j, Y g:i A" }}</p>{% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card-modern hover-lift p-4 mb-3">
+      <h3 class="section-title h6 mb-3"><i class="bi bi-person-lines-fill me-2 text-primary"></i> Account Information</h3>
+      <div class="table-responsive">
+        <table class="table table-modern table-sm mb-0">
+          <tbody>
+            <tr><th style="width:38%">Username</th><td>{{ profile.username }}</td></tr>
+            <tr><th>Email</th><td>{{ profile.email|default:"—" }}</td></tr>
+            <tr><th>First name</th><td>{{ profile.first_name|default:"—" }}</td></tr>
+            <tr><th>Last name</th><td>{{ profile.last_name|default:"—" }}</td></tr>
+            <tr><th>Date joined</th><td>{{ profile.date_joined|date:"M j, Y" }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card-modern hover-lift p-4">
+      <h3 class="section-title h6 mb-3"><i class="bi bi-database-check me-2 text-primary"></i> Dataset Contribution</h3>
+      <div class="row g-3 text-center">
+        <div class="col-6 col-md-3">
+          <div class="p-3 rounded-3" style="background:var(--bg-subtle)">
+            <div class="fs-4 fw-bold" style="color:var(--primary)">{{ record_count }}</div>
+            <div class="small text-muted">Records</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="p-3 rounded-3" style="background:var(--bg-subtle)">
+            <div class="fs-4 fw-bold" style="color:var(--success)">{{ total_passengers_display }}</div>
+            <div class="small text-muted">Passengers</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="p-3 rounded-3" style="background:var(--bg-subtle)">
+            <div class="fs-6 fw-bold" style="color:var(--accent)">{% if month_span.0 %}{{ month_span.0|date:"M Y" }}{% else %}—{% endif %}</div>
+            <div class="small text-muted">Earliest</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="p-3 rounded-3" style="background:var(--bg-subtle)">
+            <div class="fs-6 fw-bold" style="color:var(--warning)">{% if month_span.1 %}{{ month_span.1|date:"M Y" }}{% else %}—{% endif %}</div>
+            <div class="small text-muted">Latest</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
